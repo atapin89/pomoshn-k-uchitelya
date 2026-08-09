@@ -1,0 +1,18 @@
+{
+  "name": "Помощник учителя",
+  "short_name": "Помощник учителя",
+  "description": "Помощник учителя: таймер, генератор, контроль шума, флэш-карточки",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

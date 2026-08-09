@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  height: 100dvh;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  touch-action: manipulation;
+}
+
+.notebook-bg {
+  background-color: #faf9ff;
+  background-image:
+    linear-gradient(to right, rgba(147, 51, 234, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(147, 51, 234, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}

@@ -1,0 +1,535 @@
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { Mic, MicOff, Volume2, ChevronDown, ChevronUp } from 'lucide-react';
+import BackButton from './BackButton';
+import YandexAdBlock from './YandexAdBlock';
+import { triggerHaptic } from '@/lib/haptic';
+
+type Theme = 'balls' | 'emojis' | 'bubbles';
+type SoundType = 'beep' | 'shush' | 'bell' | 'none';
+
+interface Ball {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  color: string;
+  emoji: string;
+}
+
+const COLORS = [
+  '#a855f7', '#8b5cf6', '#7c3aed', '#9333ea',
+  '#c084fc', '#d8b4fe', '#6d28d9', '#e9d5ff',
+];
+
+const EMOJIS = ['😊', '😮', '😡', '😴', '🤔', '😲', '🙄', '😬'];
+
+function createBalls(count: number, width: number, height: number): Ball[] {
+  const balls: Ball[] = [];
+  for (let i = 0; i < count; i++) {
+    const radius = 14 + Math.random() * 14;
+    balls.push({
+      x: Math.random() * (width - radius * 2) + radius,
+      y: Math.random() * (height - radius * 2) + radius,
+      vx: (Math.random() - 0.5) * 2,
+      vy: 0,
+      radius,
+      color: COLORS[i % COLORS.length],
+      emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
+    });
+  }
+  return balls;
+}
+
+export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const ballsRef = useRef<Ball[]>([]);
+  const lastBeepRef = useRef<number>(0);
+  const loudSinceRef = useRef<number | null>(null);
+
+  const [active, setActive] = useState(false);
+  const [error, setError] = useState('');
+  const [sensitivity, setSensitivity] = useState(80);
+  const [theme, setTheme] = useState<Theme>('balls');
+  const [ballCount, setBallCount] = useState(60);
+  const [soundAlert, setSoundAlert] = useState(true);
+  const [soundType, setSoundType] = useState<SoundType>('beep');
+  const [threshold, setThreshold] = useState(80);
+  const [showSettings, setShowSettings] = useState(true);
+  const [noiseLevel, setNoiseLevel] = useState(0);
+
+  const sensitivityRef = useRef(sensitivity);
+  const themeRef = useRef(theme);
+  const soundAlertRef = useRef(soundAlert);
+  const soundTypeRef = useRef(soundType);
+  const thresholdRef = useRef(threshold);
+  sensitivityRef.current = sensitivity;
+  themeRef.current = theme;
+  soundAlertRef.current = soundAlert;
+  soundTypeRef.current = soundType;
+  thresholdRef.current = threshold;
+
+  const cleanup = useCallback(() => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close();
+    }
+    audioContextRef.current = null;
+    analyserRef.current = null;
+    setActive(false);
+  }, []);
+
+  const playSound = (ctx: AudioContext, type: SoundType) => {
+    if (type === 'none') return;
+    const now = ctx.currentTime;
+
+    if (type === 'beep') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.2);
+    } else if (type === 'shush') {
+      const bufferSize = ctx.sampleRate * 0.4;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 4000;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(now);
+      noise.stop(now + 0.4);
+    } else if (type === 'bell') {
+      const freqs = [523, 659, 784];
+      freqs.forEach((f, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, now + i * 0.08);
+        gain.gain.setValueAtTime(0.2, now + i * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.4);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + i * 0.08);
+        osc.stop(now + i * 0.08 + 0.4);
+      });
+    }
+  };
+
+  const startMic = async () => {
+    setError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioCtx();
+      audioContextRef.current = ctx;
+
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 1024;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
+      setActive(true);
+    } catch (e: any) {
+      if (e?.name === 'NotAllowedError') {
+        setError('Доступ к микрофону запрещён. Разрешите доступ в настройках браузера.');
+      } else {
+        setError('Не удалось получить доступ к микрофону.');
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!active || !canvasRef.current || !analyserRef.current || !audioContextRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx2d = canvas.getContext('2d');
+    if (!ctx2d) return;
+
+    const audioCtx = audioContextRef.current;
+    const analyser = analyserRef.current;
+    const data = new Uint8Array(analyser.frequencyBinCount);
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx2d.scale(window.devicePixelRatio, window.devicePixelRatio);
+      ballsRef.current = createBalls(ballCount, rect.width, rect.height);
+    };
+    resize();
+
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+
+    const GRAVITY = 0.45;
+    const BOUNCE = 0.72;
+    const FRICTION = 0.985;
+
+    const loop = () => {
+      rafRef.current = requestAnimationFrame(loop);
+
+      const w = canvas.width / window.devicePixelRatio;
+      const h = canvas.height / window.devicePixelRatio;
+
+      analyser.getByteTimeDomainData(data);
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) {
+        const v = (data[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / data.length);
+      const sens = sensitivityRef.current / 50;
+      const volume = Math.min(1, rms * sens * 3);
+      setNoiseLevel(volume);
+
+      const thr = thresholdRef.current / 100;
+      if (soundAlertRef.current && soundTypeRef.current !== 'none' && volume > thr) {
+        if (loudSinceRef.current === null) {
+          loudSinceRef.current = Date.now();
+        } else if (Date.now() - loudSinceRef.current > 2000) {
+          if (Date.now() - lastBeepRef.current > 3000) {
+            playSound(audioCtx, soundTypeRef.current);
+            lastBeepRef.current = Date.now();
+          }
+        }
+      } else {
+        loudSinceRef.current = null;
+      }
+
+      const balls = ballsRef.current;
+      const force = volume * 22;
+
+      ctx2d.clearRect(0, 0, w, h);
+
+      for (const ball of balls) {
+        if (volume > 0.05) {
+          const angle = Math.random() * Math.PI * 2;
+          const power = force * (0.5 + Math.random() * 0.8);
+          ball.vx += Math.cos(angle) * power * 0.15;
+          ball.vy -= Math.abs(Math.sin(angle)) * power * 0.2 + power * 0.08;
+        }
+
+        ball.vy += GRAVITY;
+        ball.vx *= FRICTION;
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        if (ball.x < ball.radius) {
+          ball.x = ball.radius;
+          ball.vx = -ball.vx * BOUNCE;
+        }
+        if (ball.x > w - ball.radius) {
+          ball.x = w - ball.radius;
+          ball.vx = -ball.vx * BOUNCE;
+        }
+        if (ball.y < ball.radius) {
+          ball.y = ball.radius;
+          ball.vy = -ball.vy * BOUNCE;
+        }
+        if (ball.y > h - ball.radius) {
+          ball.y = h - ball.radius;
+          ball.vy = -ball.vy * BOUNCE;
+          ball.vx *= 0.93;
+        }
+
+        const t = themeRef.current;
+        if (t === 'balls') {
+          ctx2d.beginPath();
+          ctx2d.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+          ctx2d.fillStyle = ball.color;
+          ctx2d.fill();
+        } else if (t === 'bubbles') {
+          ctx2d.beginPath();
+          ctx2d.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+          ctx2d.fillStyle = ball.color + '40';
+          ctx2d.fill();
+          ctx2d.lineWidth = 2;
+          ctx2d.strokeStyle = ball.color;
+          ctx2d.stroke();
+        } else {
+          ctx2d.font = `${ball.radius * 1.8}px sans-serif`;
+          ctx2d.textAlign = 'center';
+          ctx2d.textBaseline = 'middle';
+          ctx2d.fillText(ball.emoji, ball.x, ball.y);
+        }
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(loop);
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      ro.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, ballCount]);
+
+  useEffect(() => {
+    return () => cleanup();
+  }, [cleanup]);
+
+  const noiseColor =
+    noiseLevel > threshold / 100
+      ? 'bg-red-500 animate-pulse'
+      : noiseLevel > 0.5
+        ? 'bg-violet-500'
+        : 'bg-purple-400';
+
+  const soundOptions: { id: SoundType; label: string }[] = [
+    { id: 'beep', label: 'Бип' },
+    { id: 'shush', label: 'Ш-ш-ш' },
+    { id: 'bell', label: 'Колокольчик' },
+    { id: 'none', label: 'Без звука' },
+  ];
+
+  return (
+    <div className="min-h-[100dvh] notebook-bg flex flex-col">
+      <header className="bg-purple-700 shadow-md sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-5 py-4">
+          <BackButton onClick={onBack} variant="light" />
+          <div className="flex items-center gap-3 mt-3">
+            <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
+              <Volume2 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white leading-tight">Контроль шума</h1>
+              <p className="text-sm text-white/70">Шумометр для класса</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 max-w-md mx-auto w-full px-5 py-5 flex flex-col gap-4">
+        {!active && !error && (
+          <div className="flex flex-col items-center justify-center gap-4 py-10">
+            <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center">
+              <Mic className="w-10 h-10 text-purple-600" />
+            </div>
+            <button
+              onClick={startMic}
+              className="bg-purple-600 hover:bg-purple-700 text-white text-lg font-semibold rounded-2xl px-8 py-4 min-h-14 transition-colors touch-manipulation shadow-md"
+            >
+              Включить микрофон
+            </button>
+            <p className="text-sm text-gray-400 text-center max-w-xs">
+              Звук обрабатывается только локально и нигде не сохраняется
+            </p>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex flex-col items-center justify-center gap-4 py-10">
+            <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
+              <MicOff className="w-10 h-10 text-red-500" />
+            </div>
+            <p className="text-sm text-red-600 text-center max-w-xs">{error}</p>
+            <button
+              onClick={startMic}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-2xl px-6 py-3 min-h-12 transition-colors touch-manipulation"
+            >
+              Повторить
+            </button>
+          </div>
+        )}
+
+        {active && (
+          <>
+            <div>
+              <div className="flex justify-between text-xs font-semibold text-purple-700 mb-1">
+                <span>Уровень шума</span>
+                <span>{Math.round(noiseLevel * 100)}%</span>
+              </div>
+              <div className="w-full h-4 rounded-full bg-gray-100 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-100 ${noiseColor}`}
+                  style={{ width: `${Math.max(2, noiseLevel * 100)}%` }}
+                />
+              </div>
+              <div className="relative h-1 mt-0.5">
+                <div
+                  className="absolute -top-0.5 w-0.5 h-3 bg-red-500"
+                  style={{ left: `${threshold}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="relative w-full h-96 rounded-2xl overflow-hidden bg-white shadow-md border border-purple-100">
+              <canvas ref={canvasRef} className="w-full h-full block" />
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-md p-4">
+              <button
+                onClick={() => setShowSettings((s) => !s)}
+                className="w-full flex items-center justify-between text-purple-700 font-semibold min-h-12 touch-manipulation"
+              >
+                <span>Настройки</span>
+                {showSettings ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+
+              {showSettings && (
+                <div className="space-y-4 mt-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 flex justify-between">
+                      <span>Чувствительность</span>
+                      <span className="text-purple-600 font-semibold">{sensitivity}</span>
+                    </label>
+                    <input
+                      type="range"
+                      min={10}
+                      max={200}
+                      value={sensitivity}
+                      onChange={(e) => {
+                        setSensitivity(Number(e.target.value));
+                        triggerHaptic('light');
+                      }}
+                      className="w-full accent-purple-600 h-2 cursor-pointer mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 flex justify-between">
+                      <span>Порог сигнала</span>
+                      <span className="text-purple-600 font-semibold">{threshold}%</span>
+                    </label>
+                    <input
+                      type="range"
+                      min={20}
+                      max={100}
+                      value={threshold}
+                      onChange={(e) => {
+                        setThreshold(Number(e.target.value));
+                        triggerHaptic('light');
+                      }}
+                      className="w-full accent-purple-600 h-2 cursor-pointer mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 block mb-2">Тема объектов</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {([['balls', 'Шарики'], ['emojis', 'Смайлики'], ['bubbles', 'Пузыри']] as [Theme, string][]).map(
+                        ([id, label]) => (
+                          <button
+                            key={id}
+                            onClick={() => {
+                              setTheme(id);
+                              triggerHaptic('light');
+                            }}
+                            className={`py-2.5 rounded-xl text-sm font-semibold transition-all min-h-12 touch-manipulation ${
+                              theme === id
+                                ? 'bg-purple-100 text-purple-800 border-2 border-purple-500'
+                                : 'bg-gray-50 text-gray-500 border-2 border-transparent'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ),
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 flex justify-between">
+                      <span>Количество объектов</span>
+                      <span className="text-purple-600 font-semibold">{ballCount}</span>
+                    </label>
+                    <input
+                      type="range"
+                      min={20}
+                      max={150}
+                      value={ballCount}
+                      onChange={(e) => {
+                        setBallCount(Number(e.target.value));
+                        triggerHaptic('light');
+                      }}
+                      className="w-full accent-purple-600 h-2 cursor-pointer mt-1"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-3 cursor-pointer min-h-12 touch-manipulation">
+                    <input
+                      type="checkbox"
+                      checked={soundAlert}
+                      onChange={(e) => setSoundAlert(e.target.checked)}
+                      className="w-5 h-5 accent-purple-600 cursor-pointer"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      Звуковой сигнал при шуме
+                    </span>
+                  </label>
+
+                  {soundAlert && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Звуковой сигнал</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {soundOptions.map((opt) => (
+                          <button
+                            key={opt.id}
+                            onClick={() => {
+                              setSoundType(opt.id);
+                              triggerHaptic('light');
+                            }}
+                            className={`py-2.5 rounded-xl text-sm font-semibold transition-all min-h-12 touch-manipulation ${
+                              soundType === opt.id
+                                ? 'bg-purple-100 text-purple-800 border-2 border-purple-500'
+                                : 'bg-gray-50 text-gray-500 border-2 border-transparent'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={cleanup}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-xl py-3 min-h-12 transition-colors touch-manipulation flex items-center justify-center gap-2"
+            >
+              <MicOff className="w-5 h-5" />
+              Выключить микрофон
+            </button>
+          </>
+        )}
+
+        <div className="mb-4">
+          <YandexAdBlock />
+        </div>
+      </main>
+    </div>
+  );
+}
