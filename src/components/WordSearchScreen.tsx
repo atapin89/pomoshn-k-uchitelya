@@ -39,7 +39,8 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     exportContainer.style.backgroundColor = '#ffffff';
     exportContainer.style.padding = '40px';
     exportContainer.style.borderRadius = '12px';
-    exportContainer.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    // Arial рендерится в html2canvas наиболее предсказуемо и симметрично
+    exportContainer.style.fontFamily = 'Arial, Helvetica, sans-serif';
     
     // Заголовок
     const title = document.createElement('h2');
@@ -51,51 +52,55 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     title.style.color = '#1f2937';
     exportContainer.appendChild(title);
     
-    // Сетка — используем ТАБЛИЦУ вместо div-grid для идеального центрирования в html2canvas
+    // Сетка
     const gridSize = result.gridSize;
-    const cellSize = gridSize >= 20 ? 24 : gridSize === 15 ? 28 : 32;
-    const fontSize = gridSize >= 20 ? '12px' : gridSize === 15 ? '14px' : '16px';
+    // Немного увеличиваем ячейки для лучшего визуального центрирования при экспорте
+    const cellSize = gridSize >= 20 ? 28 : gridSize === 15 ? 32 : 36;
+    const fontSize = gridSize >= 20 ? '14px' : gridSize === 15 ? '16px' : '18px';
+    const gap = 2;
     
-    const table = document.createElement('table');
-    table.style.borderCollapse = 'separate';
-    table.style.borderSpacing = '2px';
-    table.style.margin = '0 auto 24px auto';
+    // ВАЖНО: задаем точную ширину в пикселях, чтобы html2canvas не пытался переносить строки
+    const exactWidth = gridSize * cellSize + (gridSize - 1) * gap;
+    
+    const gridContainer = document.createElement('div');
+    gridContainer.style.display = 'grid';
+    gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, ${cellSize}px)`;
+    gridContainer.style.gap = `${gap}px`;
+    gridContainer.style.width = `${exactWidth}px`;
+    gridContainer.style.margin = '0 auto 24px auto';
     
     result.grid.forEach((row, r) => {
-      const tr = document.createElement('tr');
-      
       row.forEach((letter, c) => {
         const isAnswer = showAnswers && result.placedWords.some(pw => 
           pw.cells.some(cell => cell.row === r && cell.col === c)
         );
         
-        const td = document.createElement('td');
-        td.textContent = letter;
-        td.style.width = `${cellSize}px`;
-        td.style.height = `${cellSize}px`;
-        td.style.textAlign = 'center';
-        td.style.verticalAlign = 'middle';
-        td.style.fontSize = fontSize;
-        td.style.fontWeight = '700';
-        td.style.borderRadius = '6px';
-        td.style.border = '1px solid #e5e7eb';
-        td.style.backgroundColor = isAnswer ? '#fde047' : '#f9fafb';
-        td.style.color = isAnswer ? '#854d0e' : '#1f2937';
-        td.style.padding = '0';
-        td.style.margin = '0';
-        td.style.boxSizing = 'border-box';
-        // Ключевые свойства для центрирования в html2canvas
-        td.style.display = 'table-cell';
-        td.style.lineHeight = '1';
-        td.style.letterSpacing = '0';
+        const cell = document.createElement('div');
+        cell.style.width = `${cellSize}px`;
+        cell.style.height = `${cellSize}px`;
         
-        tr.appendChild(td);
+        // Комбинация, которая ВСЕГДА работает в html2canvas для центрирования:
+        cell.style.display = 'flex';
+        cell.style.justifyContent = 'center';
+        cell.style.alignItems = 'center';
+        cell.style.lineHeight = '1'; // Критически важно: убирает влияние высоты строки шрифта
+        cell.style.padding = '0';
+        cell.style.margin = '0';
+        cell.style.boxSizing = 'border-box';
+        
+        cell.style.fontSize = fontSize;
+        cell.style.fontWeight = 'bold';
+        cell.style.borderRadius = '6px';
+        cell.style.border = '1px solid #e5e7eb';
+        cell.style.backgroundColor = isAnswer ? '#fde047' : '#f9fafb';
+        cell.style.color = isAnswer ? '#854d0e' : '#1f2937';
+        cell.textContent = letter;
+        
+        gridContainer.appendChild(cell);
       });
-      
-      table.appendChild(tr);
     });
     
-    exportContainer.appendChild(table);
+    exportContainer.appendChild(gridContainer);
     
     // Разделитель
     const divider = document.createElement('div');
@@ -140,8 +145,9 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         scale: 2,
         useCORS: true,
         logging: false,
+        // Явно задаем размеры окна рендеринга, равные размерам контейнера
         windowHeight: exportContainer.offsetHeight + 80,
-        windowWidth: exportContainer.offsetWidth + 80,
+        windowWidth: exactWidth + 80,
         letterRendering: true,
         allowTaint: true,
         foreignObjectRendering: false
@@ -158,7 +164,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     }
   };
 
-  // Функция для определения оптимальной ширины сетки и размера шрифта
+  // Функция для определения оптимальной ширины сетки и размера шрифта (для отображения на экране)
   const getGridStyles = (size: number) => {
     if (size >= 20) return { width: 'min(100%, 400px)', fontSize: 'text-[10px] sm:text-xs', cellSize: '20px' };
     if (size === 15) return { width: 'min(100%, 360px)', fontSize: 'text-xs sm:text-sm', cellSize: '24px' };
