@@ -7,6 +7,13 @@ import BackButton from './BackButton';
 import YandexAdBlock from './YandexAdBlock';
 import html2canvas from 'html2canvas';
 
+// Вспомогательная функция для адаптивного размера шрифта
+const getFontSize = (size: number) => {
+  if (size >= 20) return 'text-[10px] sm:text-xs';
+  if (size >= 15) return 'text-xs sm:text-sm';
+  return 'text-sm sm:text-base';
+};
+
 export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [wordsInput, setWordsInput] = useState('МАТЕМАТИКА\nУЧИТЕЛЬ\nШКОЛА\nУРОК\nЗНАНИЯ');
   const [config, setConfig] = useState<WordSearchConfig>({ gridSize: 10, difficulty: 'medium' });
@@ -20,7 +27,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     setIsGenerating(true);
     triggerHaptic('medium');
     
-    // Небольшая задержка, чтобы UI успел показать состояние загрузки
     await new Promise(resolve => setTimeout(resolve, 100));
     
     const newResults = generateBatch(wordsInput, config, count);
@@ -167,14 +173,13 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
               <div id={`wordsearch-${result.id}`} className="p-4 bg-white rounded-xl border border-gray-100">
                 <h4 className="text-center font-bold text-lg mb-4 text-gray-800">Найди слова:</h4>
                 
-                {/* Сетка */}
+                {/* Сетка с адаптивным размером */}
                 <div 
-                  className="grid gap-1 mx-auto w-fit mb-6 select-none"
+                  className="grid gap-0.5 sm:gap-1 mx-auto w-full max-w-[min(100%,380px)] mb-6 select-none"
                   style={{ gridTemplateColumns: `repeat(${result.gridSize}, minmax(0, 1fr))` }}
                 >
                   {result.grid.map((row, r) =>
                     row.map((letter, c) => {
-                      // Проверяем, является ли клетка частью ответа
                       const isAnswer = showAnswers && result.placedWords.some(pw => 
                         pw.cells.some(cell => cell.row === r && cell.col === c)
                       );
@@ -182,7 +187,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                       return (
                         <div
                           key={`${r}-${c}`}
-                          className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-sm sm:text-base font-bold rounded border ${
+                          className={`aspect-square flex items-center justify-center font-bold rounded border ${getFontSize(result.gridSize)} ${
                             isAnswer 
                               ? 'bg-yellow-200 border-yellow-400 text-yellow-900' 
                               : 'bg-gray-50 border-gray-200 text-gray-800'
