@@ -183,41 +183,69 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
     }
     
-    // 2. Страница с ответами для педагога (по 6 миниатюр на страницу: 2 колонки × 3 строки)
-    doc.addPage();
-    
-    // Собираем список слов из первого варианта (обычно он одинаковый для всех)
-    const wordListString = results[0].placedWords.map(pw => pw.word).join(', ');
-    
+    // 2. Создаем Canvas для страницы ответов (чтобы поддержать кириллицу)
     const itemsPerPage = 6;
-    const cols = 2;
-    const rows = 3;
-    const gap = 10;
-    const colWidth = (usableWidth - gap) / cols; // ~90 мм
-    const headerHeight = 35;
-    const rowHeight = (pageHeight - margin * 2 - headerHeight - (rows - 1) * gap) / rows; // ~74 мм
-    
     const totalPagesForAnswers = Math.ceil(results.length / itemsPerPage);
     
     for (let p = 0; p < totalPagesForAnswers; p++) {
-      if (p > 0) doc.addPage();
+      doc.addPage();
       
-      // Заголовок страницы
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(120, 50, 150);
-      doc.text("ОТВЕТЫ ДЛЯ ПЕДАГОГА", pageWidth / 2, margin + 10, { align: "center" });
+      // Создаем canvas для всей страницы ответов
+      const answerCanvas = document.createElement('canvas');
+      const scale = 2;
+      answerCanvas.width = pageWidth * scale;
+      answerCanvas.height = pageHeight * scale;
       
-      // Список слов в заголовке (с автоматическим переносом)
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(100, 100, 100);
-      const splitWords = doc.splitTextToSize(`Зашифрованные слова: ${wordListString}`, usableWidth);
-      doc.text(splitWords, pageWidth / 2, margin + 18, { align: "center" });
+      const ctx = answerCanvas.getContext('2d');
+      if (!ctx) continue;
       
-      const startY = margin + headerHeight;
+      ctx.scale(scale, scale);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, pageWidth, pageHeight);
+      
+      // Заголовок
+      ctx.fillStyle = '#783296';
+      ctx.font = 'bold 20px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('ОТВЕТЫ ДЛЯ ПЕДАГОГА', pageWidth / 2, 20);
+      
+      // Список слов
+      const wordListString = results[0].placedWords.map(pw => pw.word).join(', ');
+      ctx.fillStyle = '#646464';
+      ctx.font = '12px Arial, sans-serif';
+      
+      // Разбиваем на строки если текст длинный
+      const wordsLines = wordListString.split(', ');
+      let currentLine = 'Зашифрованные слова: ';
+      let yPos = 32;
+      
+      wordsLines.forEach((word, idx) => {
+        const testLine = currentLine + word + (idx < wordsLines.length - 1 ? ', ' : '');
+        const metrics = ctx.measureText(testLine);
+        
+        if (metrics.width > usableWidth && currentLine !== 'Зашифрованные слова: ') {
+          ctx.fillText(currentLine, pageWidth / 2, yPos);
+          currentLine = word + ', ';
+          yPos += 15;
+        } else {
+          currentLine = testLine;
+        }
+      });
+      
+      if (currentLine) {
+        ctx.fillText(currentLine, pageWidth / 2, yPos);
+      }
       
       // Рисуем 6 миниатюр на странице
+      const cols = 2;
+      const rows = 3;
+      const gap = 10;
+      const headerHeight = 55;
+      const colWidth = (usableWidth - gap) / cols;
+      const rowHeight = (pageHeight - margin * 2 - headerHeight - (rows - 1) * gap) / rows;
+      const startY = margin + headerHeight;
+      
       for (let i = 0; i < itemsPerPage; i++) {
         const globalIndex = p * itemsPerPage + i;
         if (globalIndex >= results.length) break;
@@ -229,13 +257,14 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         const y = startY + row * (rowHeight + gap);
         
         const miniCanvas = generateCanvas(results[globalIndex], true, false, globalIndex + 1, true);
-        const miniImgData = miniCanvas.toDataURL('image/png');
-        
         const imgW = colWidth;
         const imgH = (miniCanvas.height * imgW) / miniCanvas.width;
         
-        doc.addImage(miniImgData, 'PNG', x, y, imgW, imgH);
+        ctx.drawImage(miniCanvas, x * scale, y * scale, imgW * scale, imgH * scale);
       }
+      
+      const answerImgData = answerCanvas.toDataURL('image/png');
+      doc.addImage(answerImgData, 'PNG', 0, 0, pageWidth, pageHeight);
     }
     
     doc.save('филворды_с_ответами.pdf');
