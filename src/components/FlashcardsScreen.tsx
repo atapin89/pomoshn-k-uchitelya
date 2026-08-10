@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Layers, Plus, Play, Pencil, Trash2, GraduationCap, FileQuestion } from 'lucide-react';
+import { Layers, Plus, Pencil, Trash2, RotateCcw, AlertCircle } from 'lucide-react';
 import type { Deck } from '@/types';
 import { loadDecks, saveDecks } from '@/lib/storage';
 import { triggerHaptic } from '@/lib/haptic';
@@ -13,19 +13,26 @@ interface FlashcardsScreenProps {
   onQuiz: (deckId: string) => void;
 }
 
-function deckProgress(deck: Deck): { learned: number; total: number } {
-  const total = deck.cards.length;
-  const learned = deck.cards.filter((c) => c.status === 'learned').length;
-  return { learned, total };
-}
-
 export default function FlashcardsScreen({ onBack, onStudy, onQuiz }: FlashcardsScreenProps) {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [editing, setEditing] = useState<Deck | null>(null);
   const [creating, setCreating] = useState(false);
+  const [mistakeCards, setMistakeCards] = useState<{ card: any; deckTitle: string; deckId: string }[]>([]);
 
   useEffect(() => {
-    setDecks(loadDecks());
+    const loaded = loadDecks();
+    setDecks(loaded);
+    
+    // Собираем все карточки со статусом 'mistake' для секции "Повторить ошибки"
+    const mistakes: { card: any; deckTitle: string; deckId: string }[] = [];
+    loaded.forEach(deck => {
+      deck.cards
+        .filter(c => c.status === 'mistake')
+        .forEach(card => {
+          mistakes.push({ card, deckTitle: deck.title, deckId: deck.id });
+        });
+    });
+    setMistakeCards(mistakes);
   }, []);
 
   const persist = (next: Deck[]) => {
@@ -48,6 +55,14 @@ export default function FlashcardsScreen({ onBack, onStudy, onQuiz }: Flashcards
     persist(decks.filter((d) => d.id !== id));
   };
 
+  const getDeckProgress = (deck: Deck) => {
+    const total = deck.cards.length;
+    const learned = deck.cards.filter((c) => c.status === 'learned').length;
+    const mistakes = deck.cards.filter((c) => c.status === 'mistake').length;
+    const pct = total > 0 ? Math.round((learned / total) * 100) : 0;
+    return { total, learned, mistakes, pct };
+  };
+
   return (
     <div className="min-h-[100dvh] bg-purple-50 flex flex-col">
       <header className="bg-purple-700 shadow-md sticky top-0 z-10">
@@ -59,23 +74,59 @@ export default function FlashcardsScreen({ onBack, onStudy, onQuiz }: Flashcards
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white leading-tight">Флэш-карточки</h1>
-              <p className="text-sm text-white/70">Управление колодами</p>
+              <p className="text-sm text-white/70">Интервальное повторение</p>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-md mx-auto w-full px-5 py-5 flex flex-col gap-4">
+      <main className="flex-1 max-w-md mx-auto w-full px-5 py-5 flex flex-col gap-4 overflow-y-auto">
+        {/* СЕКЦИЯ: ПОВТОРИТЬ ОШИБКИ */}
+        {mistakeCards.length > 0 && (
+          <div className="bg-gradient-to-br from-orange-100 to-red-50 border-2 border-orange-200 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertCircle className="w-5 h-5 text-orange-600" />
+              <h3 className="font-bold text-orange-800">Повторить ошибки</h3>
+              <span className="ml-auto bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                {mistakeCards.length}
+              </span>
+            </div>
+            <p className="text-sm text-orange-700 mb-3">
+              У вас {mistakeCards.length} карточек, которые нужно повторить
+            </p>
+            <button
+              onClick={() => {
+                triggerHaptic('heavy');
+                // Создаем временную колоду из ошибок и запускаем изучение
+                const tempDeck: Deck = {
+                  id: 'mistakes-temp',
+                  title: 'Повторение ошибок',
+                  cards: mistakeCards.map(m => m.card),
+                  createdAt: Date.now(),
+                };
+                // Сохраняем во временное хранилище
+                localStorage.setItem('temp_study_deck', JSON.stringify(tempDeck));
+                // Переходим на изучение через специальный маршрут
+                onStudy('mistakes-temp');
+              }}
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            >
+              <RotateCcw className="w-5 h-5" />
+              Начать повторение
+            </button>
+          </div>
+        )}
+
+        {/* СПИСОК КОЛОД */}
         {decks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex flex-col items-center justify-center py-16 text-center">
             <Layers className="w-16 h-16 text-purple-300 mb-4" />
             <p className="text-lg font-semibold text-purple-700">Пока нет колод</p>
             <p className="text-sm text-gray-500 mt-1">Создайте первую колоду карточек</p>
           </div>
         ) : (
           decks.map((deck) => {
-            const { learned, total } = deckProgress(deck);
-            const pct = total > 0 ? Math.round((learned / total) * 100) : 0;
+            const { total, learned, mistakes, pct } = getDeckProgress(deck);
             return (
               <div
                 key={deck.id}
@@ -85,7 +136,8 @@ export default function FlashcardsScreen({ onBack, onStudy, onQuiz }: Flashcards
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-bold text-purple-700 truncate">{deck.title}</h3>
                     <p className="text-sm text-gray-500">
-                      {total} карточек · Изучено {learned}/{total}
+                      {total} карточек · Изучено {learned}
+                      {mistakes > 0 && <span className="text-orange-600"> · Ошибок {mistakes}</span>}
                     </p>
                   </div>
                   <div className="flex gap-1.5 shrink-0">
@@ -94,14 +146,14 @@ export default function FlashcardsScreen({ onBack, onStudy, onQuiz }: Flashcards
                         triggerHaptic('light');
                         setEditing(deck);
                       }}
-                      className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 active:scale-95 transition-transform touch-manipulation"
+                      className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 active:scale-95 transition-transform"
                       aria-label="Редактировать"
                     >
                       <Pencil className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => handleDeleteDeck(deck.id)}
-                      className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-500 active:scale-95 transition-transform touch-manipulation"
+                      className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-500 active:scale-95 transition-transform"
                       aria-label="Удалить"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -109,23 +161,25 @@ export default function FlashcardsScreen({ onBack, onStudy, onQuiz }: Flashcards
                   </div>
                 </div>
 
+                {/* Прогресс-бар */}
                 <div className="w-full h-2.5 bg-purple-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-purple-600 rounded-full transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-purple-500 to-violet-600 rounded-full transition-all duration-500"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
 
-                <div className="flex gap-2.5 mt-1">
+                {/* Кнопки действий */}
+                <div className="grid grid-cols-2 gap-2.5 mt-1">
                   <button
                     onClick={() => {
                       triggerHaptic('light');
                       onStudy(deck.id);
                     }}
                     disabled={total === 0}
-                    className="flex-1 bg-purple-600 text-white font-semibold rounded-xl py-3 min-h-12 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform touch-manipuration disabled:opacity-40 disabled:active:scale-100"
+                    className="bg-purple-600 text-white font-semibold rounded-xl py-3 min-h-12 flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-40"
                   >
-                    <Play className="w-5 h-5" />
+                    <Layers className="w-5 h-5" />
                     Изучать
                   </button>
                   <button
@@ -134,9 +188,8 @@ export default function FlashcardsScreen({ onBack, onStudy, onQuiz }: Flashcards
                       onQuiz(deck.id);
                     }}
                     disabled={total < 2}
-                    className="flex-1 bg-white border-2 border-purple-200 text-purple-700 font-semibold rounded-xl py-3 min-h-12 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform touch-manipulation disabled:opacity-40 disabled:active:scale-100"
+                    className="bg-white border-2 border-purple-200 text-purple-700 font-semibold rounded-xl py-3 min-h-12 flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-40"
                   >
-                    <FileQuestion className="w-5 h-5" />
                     Тест
                   </button>
                 </div>
@@ -145,12 +198,13 @@ export default function FlashcardsScreen({ onBack, onStudy, onQuiz }: Flashcards
           })
         )}
 
+        {/* Кнопка создания */}
         <button
           onClick={() => {
             triggerHaptic('light');
             setCreating(true);
           }}
-          className="w-full bg-white border-2 border-dashed border-purple-300 rounded-2xl py-4 flex items-center justify-center gap-2 text-purple-600 font-semibold active:scale-[0.98] transition-transform min-h-14 touch-manipulation"
+          className="w-full bg-white border-2 border-dashed border-purple-300 rounded-2xl py-4 flex items-center justify-center gap-2 text-purple-600 font-semibold active:scale-95 transition-transform min-h-14"
         >
           <Plus className="w-5 h-5" />
           Создать новую колоду
