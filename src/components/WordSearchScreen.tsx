@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Download, RefreshCw, Check, AlertTriangle, Grid3x3 } from 'lucide-react';
 import { generateBatch } from '@/lib/wordSearchGenerator';
 import type { WordSearchResult, WordSearchConfig } from '@/types';
@@ -14,6 +14,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [showAnswers, setShowAnswers] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [batchCount, setBatchCount] = useState(1);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   const handleGenerate = async (count: number) => {
     if (!wordsInput.trim()) return;
@@ -28,29 +29,124 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     setIsGenerating(false);
   };
 
-  const downloadAsImage = async (resultId: string, index: number) => {
-    const element = document.getElementById(`wordsearch-${result.id}`);
-    if (!element) return;
-    
+  const downloadAsImage = async (result: WordSearchResult, index: number) => {
     triggerHaptic('light');
     
-    // Временно добавляем класс для фиксации размеров при экспорте
-    element.classList.add('exporting');
+    // Создаем временный контейнер для экспорта
+    const exportContainer = document.createElement('div');
+    exportContainer.style.position = 'fixed';
+    exportContainer.style.top = '-9999px';
+    exportContainer.style.left = '0';
+    exportContainer.style.backgroundColor = '#ffffff';
+    exportContainer.style.padding = '40px';
+    exportContainer.style.borderRadius = '12px';
+    exportContainer.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+    exportContainer.style.fontFamily = 'system-ui, -apple-system, sans-serif';
     
-    const canvas = await html2canvas(element, { 
-      backgroundColor: '#ffffff', 
-      scale: 2,
-      useCORS: true,
-      logging: false
+    // Заголовок
+    const title = document.createElement('h2');
+    title.textContent = 'Найди слова:';
+    title.style.fontSize = '24px';
+    title.style.fontWeight = 'bold';
+    title.style.textAlign = 'center';
+    title.style.marginBottom = '24px';
+    title.style.color = '#1f2937';
+    exportContainer.appendChild(title);
+    
+    // Сетка
+    const gridSize = result.gridSize;
+    const cellSize = gridSize >= 20 ? 24 : gridSize === 15 ? 28 : 32;
+    const gap = 2;
+    const totalWidth = gridSize * (cellSize + gap) - gap;
+    
+    const gridContainer = document.createElement('div');
+    gridContainer.style.display = 'grid';
+    gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, ${cellSize}px)`;
+    gridContainer.style.gap = `${gap}px`;
+    gridContainer.style.width = `${totalWidth}px`;
+    gridContainer.style.margin = '0 auto 24px';
+    
+    result.grid.forEach((row, r) => {
+      row.forEach((letter, c) => {
+        const isAnswer = showAnswers && result.placedWords.some(pw => 
+          pw.cells.some(cell => cell.row === r && cell.col === c)
+        );
+        
+        const cell = document.createElement('div');
+        cell.style.width = `${cellSize}px`;
+        cell.style.height = `${cellSize}px`;
+        cell.style.display = 'flex';
+        cell.style.alignItems = 'center';
+        cell.style.justifyContent = 'center';
+        cell.style.fontSize = gridSize >= 20 ? '14px' : gridSize === 15 ? '16px' : '18px';
+        cell.style.fontWeight = 'bold';
+        cell.style.borderRadius = '6px';
+        cell.style.border = '1px solid #e5e7eb';
+        cell.style.backgroundColor = isAnswer ? '#fde047' : '#f9fafb';
+        cell.style.color = isAnswer ? '#854d0e' : '#1f2937';
+        cell.textContent = letter;
+        gridContainer.appendChild(cell);
+      });
     });
     
-    // Убираем класс после экспорта
-    element.classList.remove('exporting');
+    exportContainer.appendChild(gridContainer);
     
-    const link = document.createElement('a');
-    link.download = `филворд_вариант_${index + 1}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    // Разделитель
+    const divider = document.createElement('div');
+    divider.style.borderTop = '2px dashed #d1d5db';
+    divider.style.margin = '24px 0';
+    exportContainer.appendChild(divider);
+    
+    // Список слов
+    const wordsTitle = document.createElement('p');
+    wordsTitle.textContent = 'Список слов:';
+    wordsTitle.style.fontSize = '16px';
+    wordsTitle.style.fontWeight = '600';
+    wordsTitle.style.textAlign = 'center';
+    wordsTitle.style.marginBottom = '16px';
+    wordsTitle.style.color = '#4b5563';
+    exportContainer.appendChild(wordsTitle);
+    
+    const wordsContainer = document.createElement('div');
+    wordsContainer.style.display = 'flex';
+    wordsContainer.style.flexWrap = 'wrap';
+    wordsContainer.style.justifyContent = 'center';
+    wordsContainer.style.gap = '8px';
+    
+    result.placedWords.forEach((pw) => {
+      const wordBadge = document.createElement('span');
+      wordBadge.textContent = pw.word;
+      wordBadge.style.padding = '6px 12px';
+      wordBadge.style.borderRadius = '6px';
+      wordBadge.style.backgroundColor = '#f3e8ff';
+      wordBadge.style.color = '#6b21a8';
+      wordBadge.style.fontSize = '14px';
+      wordBadge.style.fontWeight = '600';
+      wordsContainer.appendChild(wordBadge);
+    });
+    
+    exportContainer.appendChild(wordsContainer);
+    document.body.appendChild(exportContainer);
+    
+    try {
+      const canvas = await html2canvas(exportContainer, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowHeight: exportContainer.offsetHeight + 80,
+        windowWidth: Math.max(totalWidth + 80, 400)
+      });
+      
+      const link = document.createElement('a');
+      link.download = `филворд_вариант_${index + 1}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Error exporting:', error);
+    } finally {
+      document.body.removeChild(exportContainer);
+    }
   };
 
   // Функция для определения оптимальной ширины сетки и размера шрифта
@@ -169,7 +265,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-purple-700">Вариант #{index + 1}</h3>
                   <button
-                    onClick={() => downloadAsImage(result.id, index)}
+                    onClick={() => downloadAsImage(result, index)}
                     className="flex items-center gap-1.5 text-sm font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-lg transition-colors"
                   >
                     <Download className="w-4 h-4" /> Скачать PNG
@@ -185,11 +281,11 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                   </div>
                 )}
 
-                {/* Область для скриншота (белый фон для чистой печати) */}
-                <div id={`wordsearch-${result.id}`} className="p-4 bg-white rounded-xl border border-gray-100">
+                {/* Область для просмотра на экране */}
+                <div className="p-4 bg-white rounded-xl border border-gray-100">
                   <h4 className="text-center font-bold text-lg mb-4 text-gray-800">Найди слова:</h4>
                   
-                  {/* Сетка с адаптивным размером и горизонтальным скроллом при необходимости */}
+                  {/* Сетка с адаптивным размером и горизонтальным скроллом */}
                   <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
                     <div 
                       className="grid gap-0.5 sm:gap-1 mx-auto select-none"
@@ -207,7 +303,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                           return (
                             <div
                               key={`${r}-${c}`}
-                              className={`flex items-center justify-center font-bold rounded border ${fontSize} cell-square ${
+                              className={`flex items-center justify-center font-bold rounded border ${fontSize} ${
                                 isAnswer 
                                   ? 'bg-yellow-200 border-yellow-400 text-yellow-900' 
                                   : 'bg-gray-50 border-gray-200 text-gray-800'
@@ -215,8 +311,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                               style={{ 
                                 width: cellSize, 
                                 height: cellSize,
-                                textAlign: 'center',
-                                lineHeight: cellSize
                               }}
                             >
                               {letter}
