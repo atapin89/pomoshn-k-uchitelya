@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Clock, Dices, Volume2, Layers, HelpCircle } from 'lucide-react';
+import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3 } from 'lucide-react';
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
 
 interface HomeScreenProps {
-  onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards') => void;
+  onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch') => void;
 }
 
 export default function HomeScreen({ onNavigate }: HomeScreenProps) {
@@ -110,6 +110,29 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
             <HelpCircle className="w-5 h-5 text-white" />
           </button>
         </div>
+
+        {/* Генератор филвордов */}
+        <div className="relative">
+          <button
+            onClick={() => onNavigate('wordsearch')}
+            className="w-full bg-gradient-to-br from-purple-500 to-violet-600 text-white rounded-3xl p-6 min-h-[120px] flex items-center gap-5 shadow-lg active:scale-[0.98] transition-transform touch-manipulation"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+              <Grid3x3 className="w-8 h-8 text-white" />
+            </div>
+            <div className="text-left">
+              <h2 className="text-2xl font-bold">Генератор филвордов</h2>
+              <p className="text-white/80 text-sm mt-1">Поиск слов с ответами</p>
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveHelpModal('wordsearch')}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/30 hover:bg-white/50 flex items-center justify-center transition-all duration-200"
+            aria-label="Помощь"
+          >
+            <HelpCircle className="w-5 h-5 text-white" />
+          </button>
+        </div>
       </main>
 
       <YandexAdBlock />
@@ -117,8 +140,8 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
       <HelpModal
         isOpen={activeHelpModal !== null}
         onClose={() => setActiveHelpModal(null)}
-        title={activeHelpModal ? helpTexts[activeHelpModal as keyof typeof helpTexts].title : ''}
-        content={activeHelpModal ? helpTexts[activeHelpModal as keyof typeof helpTexts].content : ''}
+        title={activeHelpModal ? helpTexts[activeHelpModal as keyof typeof helpTexts]?.title || 'Помощь' : ''}
+        content={activeHelpModal ? helpTexts[activeHelpModal as keyof typeof helpTexts]?.content || 'Описание скоро появится' : ''}
       />
     </div>
   );
