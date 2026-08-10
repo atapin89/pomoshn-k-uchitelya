@@ -4,6 +4,7 @@ import type { Deck } from '@/types';
 import { loadDecks, saveDecks } from '@/lib/storage';
 import { triggerHaptic } from '@/lib/haptic';
 import BackButton from './BackButton';
+import YandexAdBlock from './YandexAdBlock'; // <-- ДОБАВЛЕН ИМПОРТ
 
 interface StudyScreenProps {
   deckId: string;
@@ -110,6 +111,7 @@ export default function StudyScreen({ deckId, onBack }: StudyScreenProps) {
             </div>
             <button onClick={onBack} className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg">Вернуться к колодам</button>
           </div>
+          <YandexAdBlock /> {/* <-- ДОБАВЛЕН КОМПОНЕНТ РЕКЛАМЫ */}
         </main>
       </div>
     );
@@ -193,6 +195,7 @@ export default function StudyScreen({ deckId, onBack }: StudyScreenProps) {
             </button>
           </div>
         )}
+        <YandexAdBlock /> {/* <-- ДОБАВЛЕН КОМПОНЕНТ РЕКЛАМЫ */}
       </main>
     </div>
   );
