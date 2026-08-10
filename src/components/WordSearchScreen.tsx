@@ -39,7 +39,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     exportContainer.style.backgroundColor = '#ffffff';
     exportContainer.style.padding = '40px';
     exportContainer.style.borderRadius = '12px';
-    exportContainer.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+    exportContainer.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     
     // Заголовок
     const title = document.createElement('h2');
@@ -51,48 +51,51 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     title.style.color = '#1f2937';
     exportContainer.appendChild(title);
     
-    // Сетка
+    // Сетка — используем ТАБЛИЦУ вместо div-grid для идеального центрирования в html2canvas
     const gridSize = result.gridSize;
     const cellSize = gridSize >= 20 ? 24 : gridSize === 15 ? 28 : 32;
-    const gap = 2;
-    const totalWidth = gridSize * (cellSize + gap) - gap;
+    const fontSize = gridSize >= 20 ? '12px' : gridSize === 15 ? '14px' : '16px';
     
-    const gridContainer = document.createElement('div');
-    gridContainer.style.display = 'grid';
-    gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, ${cellSize}px)`;
-    gridContainer.style.gap = `${gap}px`;
-    gridContainer.style.width = `${totalWidth}px`;
-    gridContainer.style.margin = '0 auto 24px auto';
+    const table = document.createElement('table');
+    table.style.borderCollapse = 'separate';
+    table.style.borderSpacing = '2px';
+    table.style.margin = '0 auto 24px auto';
     
     result.grid.forEach((row, r) => {
+      const tr = document.createElement('tr');
+      
       row.forEach((letter, c) => {
         const isAnswer = showAnswers && result.placedWords.some(pw => 
           pw.cells.some(cell => cell.row === r && cell.col === c)
         );
         
-        const cell = document.createElement('div');
-        cell.style.width = `${cellSize}px`;
-        cell.style.height = `${cellSize}px`;
-        // ИСПРАВЛЕНИЕ: используем lineHeight и textAlign вместо flexbox для идеального центрирования в html2canvas
-        cell.style.display = 'block';
-        cell.style.textAlign = 'center';
-        cell.style.lineHeight = `${cellSize}px`;
-        cell.style.verticalAlign = 'middle';
-        cell.style.fontSize = gridSize >= 20 ? '14px' : gridSize === 15 ? '16px' : '18px';
-        cell.style.fontWeight = 'bold';
-        cell.style.borderRadius = '6px';
-        cell.style.border = '1px solid #e5e7eb';
-        cell.style.backgroundColor = isAnswer ? '#fde047' : '#f9fafb';
-        cell.style.color = isAnswer ? '#854d0e' : '#1f2937';
-        cell.style.padding = '0';
-        cell.style.margin = '0';
-        cell.style.boxSizing = 'border-box';
-        cell.textContent = letter;
-        gridContainer.appendChild(cell);
+        const td = document.createElement('td');
+        td.textContent = letter;
+        td.style.width = `${cellSize}px`;
+        td.style.height = `${cellSize}px`;
+        td.style.textAlign = 'center';
+        td.style.verticalAlign = 'middle';
+        td.style.fontSize = fontSize;
+        td.style.fontWeight = '700';
+        td.style.borderRadius = '6px';
+        td.style.border = '1px solid #e5e7eb';
+        td.style.backgroundColor = isAnswer ? '#fde047' : '#f9fafb';
+        td.style.color = isAnswer ? '#854d0e' : '#1f2937';
+        td.style.padding = '0';
+        td.style.margin = '0';
+        td.style.boxSizing = 'border-box';
+        // Ключевые свойства для центрирования в html2canvas
+        td.style.display = 'table-cell';
+        td.style.lineHeight = '1';
+        td.style.letterSpacing = '0';
+        
+        tr.appendChild(td);
       });
+      
+      table.appendChild(tr);
     });
     
-    exportContainer.appendChild(gridContainer);
+    exportContainer.appendChild(table);
     
     // Разделитель
     const divider = document.createElement('div');
@@ -138,7 +141,10 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         useCORS: true,
         logging: false,
         windowHeight: exportContainer.offsetHeight + 80,
-        windowWidth: Math.max(totalWidth + 80, 400)
+        windowWidth: exportContainer.offsetWidth + 80,
+        letterRendering: true,
+        allowTaint: true,
+        foreignObjectRendering: false
       });
       
       const link = document.createElement('a');
