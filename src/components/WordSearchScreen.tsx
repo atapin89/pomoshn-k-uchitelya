@@ -29,11 +29,24 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   };
 
   const downloadAsImage = async (resultId: string, index: number) => {
-    const element = document.getElementById(`wordsearch-${resultId}`);
+    const element = document.getElementById(`wordsearch-${result.id}`);
     if (!element) return;
     
     triggerHaptic('light');
-    const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 2 });
+    
+    // Временно добавляем класс для фиксации размеров при экспорте
+    element.classList.add('exporting');
+    
+    const canvas = await html2canvas(element, { 
+      backgroundColor: '#ffffff', 
+      scale: 2,
+      useCORS: true,
+      logging: false
+    });
+    
+    // Убираем класс после экспорта
+    element.classList.remove('exporting');
+    
     const link = document.createElement('a');
     link.download = `филворд_вариант_${index + 1}.png`;
     link.href = canvas.toDataURL('image/png');
@@ -42,9 +55,9 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
 
   // Функция для определения оптимальной ширины сетки и размера шрифта
   const getGridStyles = (size: number) => {
-    if (size >= 20) return { width: 'min(100%, 400px)', fontSize: 'text-[10px] sm:text-xs' }; // Ячейка ~20px
-    if (size === 15) return { width: 'min(100%, 360px)', fontSize: 'text-xs sm:text-sm' };   // Ячейка ~24px
-    return { width: 'min(100%, 320px)', fontSize: 'text-sm sm:text-base' };                  // Ячейка ~32px
+    if (size >= 20) return { width: 'min(100%, 400px)', fontSize: 'text-[10px] sm:text-xs', cellSize: '20px' };
+    if (size === 15) return { width: 'min(100%, 360px)', fontSize: 'text-xs sm:text-sm', cellSize: '24px' };
+    return { width: 'min(100%, 320px)', fontSize: 'text-sm sm:text-base', cellSize: '32px' };
   };
 
   return (
@@ -149,7 +162,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         {/* Результаты */}
         <div className="space-y-6 pb-8">
           {results.map((result, index) => {
-            const { width, fontSize } = getGridStyles(result.gridSize);
+            const { width, fontSize, cellSize } = getGridStyles(result.gridSize);
             
             return (
               <div key={result.id} className="bg-white rounded-2xl shadow-md p-4 space-y-4">
@@ -194,11 +207,17 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                           return (
                             <div
                               key={`${r}-${c}`}
-                              className={`aspect-square flex items-center justify-center font-bold rounded border ${fontSize} ${
+                              className={`flex items-center justify-center font-bold rounded border ${fontSize} cell-square ${
                                 isAnswer 
                                   ? 'bg-yellow-200 border-yellow-400 text-yellow-900' 
                                   : 'bg-gray-50 border-gray-200 text-gray-800'
                               }`}
+                              style={{ 
+                                width: cellSize, 
+                                height: cellSize,
+                                textAlign: 'center',
+                                lineHeight: cellSize
+                              }}
                             >
                               {letter}
                             </div>
