@@ -31,16 +31,12 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const downloadAsImage = async (result: WordSearchResult, index: number) => {
     triggerHaptic('light');
     
-    // Создаем временный контейнер для экспорта (скрыт за пределами экрана)
     const exportContainer = document.createElement('div');
     exportContainer.style.position = 'fixed';
     exportContainer.style.top = '-9999px';
-    exportContainer.style.left = '0';
     exportContainer.style.backgroundColor = '#ffffff';
     exportContainer.style.padding = '40px';
-    exportContainer.style.borderRadius = '12px';
-    // Arial рендерится в html2canvas наиболее предсказуемо и симметрично
-    exportContainer.style.fontFamily = 'Arial, Helvetica, sans-serif';
+    exportContainer.style.fontFamily = 'Arial, sans-serif';
     
     // Заголовок
     const title = document.createElement('h2');
@@ -48,18 +44,14 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     title.style.fontSize = '24px';
     title.style.fontWeight = 'bold';
     title.style.textAlign = 'center';
-    title.style.margin = '0 0 24px 0';
-    title.style.color = '#1f2937';
+    title.style.marginBottom = '24px';
     exportContainer.appendChild(title);
     
     // Сетка
     const gridSize = result.gridSize;
-    // Немного увеличиваем ячейки для лучшего визуального центрирования при экспорте
     const cellSize = gridSize >= 20 ? 28 : gridSize === 15 ? 32 : 36;
     const fontSize = gridSize >= 20 ? '14px' : gridSize === 15 ? '16px' : '18px';
     const gap = 2;
-    
-    // ВАЖНО: задаем точную ширину в пикселях, чтобы html2canvas не пытался переносить строки
     const exactWidth = gridSize * cellSize + (gridSize - 1) * gap;
     
     const gridContainer = document.createElement('div');
@@ -67,7 +59,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, ${cellSize}px)`;
     gridContainer.style.gap = `${gap}px`;
     gridContainer.style.width = `${exactWidth}px`;
-    gridContainer.style.margin = '0 auto 24px auto';
+    gridContainer.style.margin = '0 auto 24px';
     
     result.grid.forEach((row, r) => {
       row.forEach((letter, c) => {
@@ -78,22 +70,16 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         const cell = document.createElement('div');
         cell.style.width = `${cellSize}px`;
         cell.style.height = `${cellSize}px`;
-        
-        // Комбинация, которая ВСЕГДА работает в html2canvas для центрирования:
-        cell.style.display = 'flex';
-        cell.style.justifyContent = 'center';
-        cell.style.alignItems = 'center';
-        cell.style.lineHeight = '1'; // Критически важно: убирает влияние высоты строки шрифта
-        cell.style.padding = '0';
-        cell.style.margin = '0';
-        cell.style.boxSizing = 'border-box';
-        
+        // ИСПОЛЬЗУЕМ padding-top для подъема букв вверх
+        cell.style.paddingTop = `${Math.floor((cellSize - 18) / 2)}px`;
+        cell.style.textAlign = 'center';
         cell.style.fontSize = fontSize;
         cell.style.fontWeight = 'bold';
         cell.style.borderRadius = '6px';
         cell.style.border = '1px solid #e5e7eb';
         cell.style.backgroundColor = isAnswer ? '#fde047' : '#f9fafb';
         cell.style.color = isAnswer ? '#854d0e' : '#1f2937';
+        cell.style.boxSizing = 'border-box';
         cell.textContent = letter;
         
         gridContainer.appendChild(cell);
@@ -111,11 +97,8 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     // Список слов
     const wordsTitle = document.createElement('p');
     wordsTitle.textContent = 'Список слов:';
-    wordsTitle.style.fontSize = '16px';
-    wordsTitle.style.fontWeight = '600';
     wordsTitle.style.textAlign = 'center';
-    wordsTitle.style.margin = '0 0 16px 0';
-    wordsTitle.style.color = '#4b5563';
+    wordsTitle.style.marginBottom = '16px';
     exportContainer.appendChild(wordsTitle);
     
     const wordsContainer = document.createElement('div');
@@ -125,46 +108,35 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     wordsContainer.style.gap = '8px';
     
     result.placedWords.forEach((pw) => {
-      const wordBadge = document.createElement('span');
-      wordBadge.textContent = pw.word;
-      wordBadge.style.padding = '6px 12px';
-      wordBadge.style.borderRadius = '6px';
-      wordBadge.style.backgroundColor = '#f3e8ff';
-      wordBadge.style.color = '#6b21a8';
-      wordBadge.style.fontSize = '14px';
-      wordBadge.style.fontWeight = '600';
-      wordsContainer.appendChild(wordBadge);
+      const badge = document.createElement('span');
+      badge.textContent = pw.word;
+      badge.style.padding = '6px 12px';
+      badge.style.borderRadius = '6px';
+      badge.style.backgroundColor = '#f3e8ff';
+      badge.style.color = '#6b21a8';
+      wordsContainer.appendChild(badge);
     });
     
     exportContainer.appendChild(wordsContainer);
     document.body.appendChild(exportContainer);
     
-    try {
-      const canvas = await html2canvas(exportContainer, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        // Явно задаем размеры окна рендеринга, равные размерам контейнера
-        windowHeight: exportContainer.offsetHeight + 80,
-        windowWidth: exactWidth + 80,
-        letterRendering: true,
-        allowTaint: true,
-        foreignObjectRendering: false
-      });
-      
-      const link = document.createElement('a');
-      link.download = `филворд_вариант_${index + 1}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    } catch (error) {
-      console.error('Error exporting:', error);
-    } finally {
-      document.body.removeChild(exportContainer);
-    }
+    const canvas = await html2canvas(exportContainer, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      logging: false,
+      useCORS: true,
+      windowHeight: exportContainer.offsetHeight + 80,
+      windowWidth: exactWidth + 80
+    });
+    
+    const link = document.createElement('a');
+    link.download = `филворд_${index + 1}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+    
+    document.body.removeChild(exportContainer);
   };
 
-  // Функция для определения оптимальной ширины сетки и размера шрифта (для отображения на экране)
   const getGridStyles = (size: number) => {
     if (size >= 20) return { width: 'min(100%, 400px)', fontSize: 'text-[10px] sm:text-xs', cellSize: '20px' };
     if (size === 15) return { width: 'min(100%, 360px)', fontSize: 'text-xs sm:text-sm', cellSize: '24px' };
@@ -189,7 +161,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full px-5 py-5 flex flex-col gap-5 overflow-y-auto">
-        {/* Настройки */}
         <section className="bg-white rounded-2xl shadow-sm p-5 space-y-4">
           <div>
             <label className="text-sm font-semibold text-purple-700 block mb-2">Слова (каждое с новой строки)</label>
@@ -257,7 +228,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
           </div>
         </section>
 
-        {/* Переключатель ответов */}
         {results.length > 0 && (
           <button
             onClick={() => { setShowAnswers(!showAnswers); triggerHaptic('light'); }}
@@ -270,7 +240,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
           </button>
         )}
 
-        {/* Результаты */}
         <div className="space-y-6 pb-8">
           {results.map((result, index) => {
             const { width, fontSize, cellSize } = getGridStyles(result.gridSize);
@@ -296,11 +265,9 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                   </div>
                 )}
 
-                {/* Область для просмотра на экране */}
                 <div className="p-4 bg-white rounded-xl border border-gray-100">
                   <h4 className="text-center font-bold text-lg mb-4 text-gray-800">Найди слова:</h4>
                   
-                  {/* Сетка с адаптивным размером и горизонтальным скроллом */}
                   <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
                     <div 
                       className="grid gap-0.5 sm:gap-1 mx-auto select-none"
@@ -336,7 +303,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                     </div>
                   </div>
 
-                  {/* Список слов */}
                   <div className="border-t-2 border-dashed border-gray-300 pt-4">
                     <p className="text-center font-semibold text-gray-700 mb-3">Список слов:</p>
                     <div className="flex flex-wrap justify-center gap-2">
