@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Download, RefreshCw, Check, AlertTriangle, Grid3x3 } from 'lucide-react';
 import { generateBatch } from '@/lib/wordSearchGenerator';
 import type { WordSearchResult, WordSearchConfig } from '@/types';
@@ -14,7 +14,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [showAnswers, setShowAnswers] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [batchCount, setBatchCount] = useState(1);
-  const exportRef = useRef<HTMLDivElement>(null);
 
   const handleGenerate = async (count: number) => {
     if (!wordsInput.trim()) return;
@@ -32,7 +31,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const downloadAsImage = async (result: WordSearchResult, index: number) => {
     triggerHaptic('light');
     
-    // Создаем временный контейнер для экспорта
+    // Создаем временный контейнер для экспорта (скрыт за пределами экрана)
     const exportContainer = document.createElement('div');
     exportContainer.style.position = 'fixed';
     exportContainer.style.top = '-9999px';
@@ -40,7 +39,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     exportContainer.style.backgroundColor = '#ffffff';
     exportContainer.style.padding = '40px';
     exportContainer.style.borderRadius = '12px';
-    exportContainer.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
     exportContainer.style.fontFamily = 'system-ui, -apple-system, sans-serif';
     
     // Заголовок
@@ -49,7 +47,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     title.style.fontSize = '24px';
     title.style.fontWeight = 'bold';
     title.style.textAlign = 'center';
-    title.style.marginBottom = '24px';
+    title.style.margin = '0 0 24px 0';
     title.style.color = '#1f2937';
     exportContainer.appendChild(title);
     
@@ -64,7 +62,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, ${cellSize}px)`;
     gridContainer.style.gap = `${gap}px`;
     gridContainer.style.width = `${totalWidth}px`;
-    gridContainer.style.margin = '0 auto 24px';
+    gridContainer.style.margin = '0 auto 24px auto';
     
     result.grid.forEach((row, r) => {
       row.forEach((letter, c) => {
@@ -75,15 +73,20 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         const cell = document.createElement('div');
         cell.style.width = `${cellSize}px`;
         cell.style.height = `${cellSize}px`;
-        cell.style.display = 'flex';
-        cell.style.alignItems = 'center';
-        cell.style.justifyContent = 'center';
+        // ИСПРАВЛЕНИЕ: используем lineHeight и textAlign вместо flexbox для идеального центрирования в html2canvas
+        cell.style.display = 'block';
+        cell.style.textAlign = 'center';
+        cell.style.lineHeight = `${cellSize}px`;
+        cell.style.verticalAlign = 'middle';
         cell.style.fontSize = gridSize >= 20 ? '14px' : gridSize === 15 ? '16px' : '18px';
         cell.style.fontWeight = 'bold';
         cell.style.borderRadius = '6px';
         cell.style.border = '1px solid #e5e7eb';
         cell.style.backgroundColor = isAnswer ? '#fde047' : '#f9fafb';
         cell.style.color = isAnswer ? '#854d0e' : '#1f2937';
+        cell.style.padding = '0';
+        cell.style.margin = '0';
+        cell.style.boxSizing = 'border-box';
         cell.textContent = letter;
         gridContainer.appendChild(cell);
       });
@@ -103,7 +106,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     wordsTitle.style.fontSize = '16px';
     wordsTitle.style.fontWeight = '600';
     wordsTitle.style.textAlign = 'center';
-    wordsTitle.style.marginBottom = '16px';
+    wordsTitle.style.margin = '0 0 16px 0';
     wordsTitle.style.color = '#4b5563';
     exportContainer.appendChild(wordsTitle);
     
