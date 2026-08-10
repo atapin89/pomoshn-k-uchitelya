@@ -2,9 +2,7 @@ import { useEffect } from 'react';
 
 export default function YandexAdBlock() {
   useEffect(() => {
-    // Проверяем, чтобы не добавлять скрипты дважды при переходе между страницами
-    
-    // 1. Скрипт context.js
+    // 1. Добавляем скрипт context.js, если его еще нет на странице
     if (!document.querySelector('script[src="https://yandex.ru/ads/system/context.js"]')) {
       const script1 = document.createElement('script');
       script1.src = 'https://yandex.ru/ads/system/context.js';
@@ -12,7 +10,7 @@ export default function YandexAdBlock() {
       document.head.appendChild(script1);
     }
 
-    // 2. Скрипт ap-loader.js с ID страницы
+    // 2. Добавляем скрипт ap-loader.js с ID страницы, если его еще нет
     if (!document.querySelector('script[data-page-id="19699585"]')) {
       const script2 = document.createElement('script');
       script2.src = 'https://yandex.ru/ads/system/ap-loader.js';
@@ -22,7 +20,7 @@ export default function YandexAdBlock() {
     }
   }, []);
 
-  // Компонент ничего не отображает визуально, он только управляет скриптами.
-  // Яндекс сам найдет места для вставки рекламы на странице.
+  // Компонент ничего не отображает визуально, он только внедряет скрипты.
+  // Яндекс Autoplacement сам найдет подходящие места для рекламы на странице.
   return null;
 }
