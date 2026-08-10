@@ -90,11 +90,11 @@ export default function App() {
     return (
       <FlashcardsScreen
         onBack={() => setRoute('home')}
-        onStudy={(deckId) => {
+        onStudy={(deckId: string) => {
           setStudyDeckId(deckId);
           setRoute('study');
         }}
-        onQuiz={(deckId) => {
+        onQuiz={(deckId: string) => {
           setQuizDeckId(deckId);
           setRoute('quiz');
         }}
