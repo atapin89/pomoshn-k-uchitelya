@@ -47,46 +47,49 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     title.style.marginBottom = '24px';
     exportContainer.appendChild(title);
     
-    // Сетка
+    // Сетка — используем ТАБЛИЦУ для идеального vertical-align в html2canvas
     const gridSize = result.gridSize;
     const cellSize = gridSize >= 20 ? 28 : gridSize === 15 ? 32 : 36;
     const fontSize = gridSize >= 20 ? '14px' : gridSize === 15 ? '16px' : '18px';
     const gap = 2;
-    const exactWidth = gridSize * cellSize + (gridSize - 1) * gap;
     
-    const gridContainer = document.createElement('div');
-    gridContainer.style.display = 'grid';
-    gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, ${cellSize}px)`;
-    gridContainer.style.gap = `${gap}px`;
-    gridContainer.style.width = `${exactWidth}px`;
-    gridContainer.style.margin = '0 auto 24px';
+    const table = document.createElement('table');
+    table.style.borderCollapse = 'separate';
+    table.style.borderSpacing = `${gap}px`;
+    table.style.margin = '0 auto 24px';
     
     result.grid.forEach((row, r) => {
+      const tr = document.createElement('tr');
+      
       row.forEach((letter, c) => {
         const isAnswer = showAnswers && result.placedWords.some(pw => 
           pw.cells.some(cell => cell.row === r && cell.col === c)
         );
         
-        const cell = document.createElement('div');
-        cell.style.width = `${cellSize}px`;
-        cell.style.height = `${cellSize}px`;
-        // ИСПОЛЬЗУЕМ padding-top для подъема букв вверх
-        cell.style.paddingTop = `${Math.floor((cellSize - 18) / 2)}px`;
-        cell.style.textAlign = 'center';
-        cell.style.fontSize = fontSize;
-        cell.style.fontWeight = 'bold';
-        cell.style.borderRadius = '6px';
-        cell.style.border = '1px solid #e5e7eb';
-        cell.style.backgroundColor = isAnswer ? '#fde047' : '#f9fafb';
-        cell.style.color = isAnswer ? '#854d0e' : '#1f2937';
-        cell.style.boxSizing = 'border-box';
-        cell.textContent = letter;
+        const td = document.createElement('td');
+        td.textContent = letter;
+        td.style.width = `${cellSize}px`;
+        td.style.height = `${cellSize}px`;
+        td.style.textAlign = 'center';
+        td.style.verticalAlign = 'middle'; // КЛЮЧЕВОЕ: идеальное центрирование по вертикали
+        td.style.fontSize = fontSize;
+        td.style.fontWeight = 'bold';
+        td.style.borderRadius = '6px';
+        td.style.border = '1px solid #e5e7eb';
+        td.style.backgroundColor = isAnswer ? '#fde047' : '#f9fafb';
+        td.style.color = isAnswer ? '#854d0e' : '#1f2937';
+        td.style.padding = '0';
+        td.style.margin = '0';
+        td.style.lineHeight = '1'; // Убирает влияние высоты строки шрифта
+        td.style.boxSizing = 'border-box';
         
-        gridContainer.appendChild(cell);
+        tr.appendChild(td);
       });
+      
+      table.appendChild(tr);
     });
     
-    exportContainer.appendChild(gridContainer);
+    exportContainer.appendChild(table);
     
     // Разделитель
     const divider = document.createElement('div');
@@ -126,7 +129,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       logging: false,
       useCORS: true,
       windowHeight: exportContainer.offsetHeight + 80,
-      windowWidth: exactWidth + 80
+      windowWidth: gridSize * cellSize + (gridSize - 1) * gap + 160
     });
     
     const link = document.createElement('a');
