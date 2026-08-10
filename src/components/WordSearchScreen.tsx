@@ -7,13 +7,6 @@ import BackButton from './BackButton';
 import YandexAdBlock from './YandexAdBlock';
 import html2canvas from 'html2canvas';
 
-// Вспомогательная функция для адаптивного размера шрифта
-const getFontSize = (size: number) => {
-  if (size >= 20) return 'text-[10px] sm:text-xs';
-  if (size >= 15) return 'text-xs sm:text-sm';
-  return 'text-sm sm:text-base';
-};
-
 export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [wordsInput, setWordsInput] = useState('МАТЕМАТИКА\nУЧИТЕЛЬ\nШКОЛА\nУРОК\nЗНАНИЯ');
   const [config, setConfig] = useState<WordSearchConfig>({ gridSize: 10, difficulty: 'medium' });
@@ -45,6 +38,13 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     link.download = `филворд_вариант_${index + 1}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
+  };
+
+  // Функция для определения оптимальной ширины сетки и размера шрифта
+  const getGridStyles = (size: number) => {
+    if (size >= 20) return { width: 'min(100%, 400px)', fontSize: 'text-[10px] sm:text-xs' }; // Ячейка ~20px
+    if (size === 15) return { width: 'min(100%, 360px)', fontSize: 'text-xs sm:text-sm' };   // Ячейка ~24px
+    return { width: 'min(100%, 320px)', fontSize: 'text-sm sm:text-base' };                  // Ячейка ~32px
   };
 
   return (
@@ -148,72 +148,81 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
 
         {/* Результаты */}
         <div className="space-y-6 pb-8">
-          {results.map((result, index) => (
-            <div key={result.id} className="bg-white rounded-2xl shadow-md p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-purple-700">Вариант #{index + 1}</h3>
-                <button
-                  onClick={() => downloadAsImage(result.id, index)}
-                  className="flex items-center gap-1.5 text-sm font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-lg transition-colors"
-                >
-                  <Download className="w-4 h-4" /> Скачать PNG
-                </button>
-              </div>
-
-              {result.failedWords.length > 0 && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
-                  <p className="text-xs text-orange-700">
-                    Не поместились: {result.failedWords.join(', ')}. Попробуйте увеличить размер сетки или уменьшить количество слов.
-                  </p>
-                </div>
-              )}
-
-              {/* Область для скриншота (белый фон для чистой печати) */}
-              <div id={`wordsearch-${result.id}`} className="p-4 bg-white rounded-xl border border-gray-100">
-                <h4 className="text-center font-bold text-lg mb-4 text-gray-800">Найди слова:</h4>
-                
-                {/* Сетка с адаптивным размером */}
-                <div 
-                  className="grid gap-0.5 sm:gap-1 mx-auto w-full max-w-[min(100%,380px)] mb-6 select-none"
-                  style={{ gridTemplateColumns: `repeat(${result.gridSize}, minmax(0, 1fr))` }}
-                >
-                  {result.grid.map((row, r) =>
-                    row.map((letter, c) => {
-                      const isAnswer = showAnswers && result.placedWords.some(pw => 
-                        pw.cells.some(cell => cell.row === r && cell.col === c)
-                      );
-                      
-                      return (
-                        <div
-                          key={`${r}-${c}`}
-                          className={`aspect-square flex items-center justify-center font-bold rounded border ${getFontSize(result.gridSize)} ${
-                            isAnswer 
-                              ? 'bg-yellow-200 border-yellow-400 text-yellow-900' 
-                              : 'bg-gray-50 border-gray-200 text-gray-800'
-                          }`}
-                        >
-                          {letter}
-                        </div>
-                      );
-                    })
-                  )}
+          {results.map((result, index) => {
+            const { width, fontSize } = getGridStyles(result.gridSize);
+            
+            return (
+              <div key={result.id} className="bg-white rounded-2xl shadow-md p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-purple-700">Вариант #{index + 1}</h3>
+                  <button
+                    onClick={() => downloadAsImage(result.id, index)}
+                    className="flex items-center gap-1.5 text-sm font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-lg transition-colors"
+                  >
+                    <Download className="w-4 h-4" /> Скачать PNG
+                  </button>
                 </div>
 
-                {/* Список слов */}
-                <div className="border-t-2 border-dashed border-gray-300 pt-4">
-                  <p className="text-center font-semibold text-gray-700 mb-3">Список слов:</p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {result.placedWords.map((pw, i) => (
-                      <span key={i} className="bg-purple-100 text-purple-800 px-2.5 py-1 rounded-md text-sm font-medium">
-                        {pw.word}
-                      </span>
-                    ))}
+                {result.failedWords.length > 0 && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start gap-2">
+                    <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-orange-700">
+                      Не поместились: {result.failedWords.join(', ')}. Попробуйте увеличить размер сетки или уменьшить количество слов.
+                    </p>
+                  </div>
+                )}
+
+                {/* Область для скриншота (белый фон для чистой печати) */}
+                <div id={`wordsearch-${result.id}`} className="p-4 bg-white rounded-xl border border-gray-100">
+                  <h4 className="text-center font-bold text-lg mb-4 text-gray-800">Найди слова:</h4>
+                  
+                  {/* Сетка с адаптивным размером и горизонтальным скроллом при необходимости */}
+                  <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+                    <div 
+                      className="grid gap-0.5 sm:gap-1 mx-auto select-none"
+                      style={{ 
+                        gridTemplateColumns: `repeat(${result.gridSize}, 1fr)`,
+                        width: width
+                      }}
+                    >
+                      {result.grid.map((row, r) =>
+                        row.map((letter, c) => {
+                          const isAnswer = showAnswers && result.placedWords.some(pw => 
+                            pw.cells.some(cell => cell.row === r && cell.col === c)
+                          );
+                          
+                          return (
+                            <div
+                              key={`${r}-${c}`}
+                              className={`aspect-square flex items-center justify-center font-bold rounded border ${fontSize} ${
+                                isAnswer 
+                                  ? 'bg-yellow-200 border-yellow-400 text-yellow-900' 
+                                  : 'bg-gray-50 border-gray-200 text-gray-800'
+                              }`}
+                            >
+                              {letter}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Список слов */}
+                  <div className="border-t-2 border-dashed border-gray-300 pt-4">
+                    <p className="text-center font-semibold text-gray-700 mb-3">Список слов:</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {result.placedWords.map((pw, i) => (
+                        <span key={i} className="bg-purple-100 text-purple-800 px-2.5 py-1 rounded-md text-sm font-medium">
+                          {pw.word}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <YandexAdBlock />
