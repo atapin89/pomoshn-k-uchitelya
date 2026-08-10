@@ -16,17 +16,17 @@ const generateCanvas = (
   isMiniature: boolean = false
 ) => {
   const gridSize = result.gridSize;
-  const cellSize = isMiniature ? (gridSize >= 20 ? 18 : gridSize === 15 ? 22 : 26) : (gridSize >= 20 ? 28 : gridSize === 15 ? 32 : 36);
-  const fontSize = isMiniature ? (gridSize >= 20 ? 10 : gridSize === 15 ? 12 : 14) : (gridSize >= 20 ? 14 : gridSize === 15 ? 16 : 18);
+  const cellSize = isMiniature ? (gridSize >= 20 ? 16 : gridSize === 15 ? 20 : 24) : (gridSize >= 20 ? 28 : gridSize === 15 ? 32 : 36);
+  const fontSize = isMiniature ? (gridSize >= 20 ? 9 : gridSize === 15 ? 11 : 13) : (gridSize >= 20 ? 14 : gridSize === 15 ? 16 : 18);
   const gap = isMiniature ? 1 : 2;
-  const padding = isMiniature ? 20 : 40;
+  const padding = isMiniature ? 15 : 40;
   
   const gridWidth = gridSize * cellSize + (gridSize - 1) * gap;
   const gridHeight = gridWidth;
-  const wordListHeight = showWords ? (isMiniature ? 50 : 80) : 0;
+  const wordListHeight = showWords ? (isMiniature ? 40 : 80) : 0;
   
-  const totalWidth = Math.max(gridWidth + padding * 2, isMiniature ? 400 : 600);
-  const totalHeight = padding * 2 + (isMiniature ? 30 : 40) + gridHeight + (showWords ? 40 + wordListHeight : 20);
+  const totalWidth = Math.max(gridWidth + padding * 2, isMiniature ? 300 : 600);
+  const totalHeight = padding * 2 + (isMiniature ? 25 : 40) + gridHeight + (showWords ? 30 + wordListHeight : 20);
   
   const canvas = document.createElement('canvas');
   const scale = 2; // Для высокого разрешения (Retina)
@@ -37,22 +37,20 @@ const generateCanvas = (
   if (!ctx) return canvas;
   
   ctx.scale(scale, scale);
-  
-  // 1. Белый фон
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, totalWidth, totalHeight);
   
-  // 2. Заголовок
+  // Заголовок
   ctx.fillStyle = '#1f2937';
-  ctx.font = `bold ${isMiniature ? 16 : 24}px Arial, sans-serif`;
+  ctx.font = `bold ${isMiniature ? 14 : 24}px Arial, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(`Вариант ${variantNum}`, totalWidth / 2, padding + (isMiniature ? 10 : 12));
+  ctx.fillText(`Вариант ${variantNum}`, totalWidth / 2, padding + (isMiniature ? 8 : 12));
   
   const startX = (totalWidth - gridWidth) / 2;
-  const startY = padding + (isMiniature ? 30 : 40);
+  const startY = padding + (isMiniature ? 25 : 40);
   
-  // 3. Сетка
+  // Сетка
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
       const x = startX + c * (cellSize + gap);
@@ -84,29 +82,29 @@ const generateCanvas = (
     }
   }
   
-  // 4. Список слов (если включен)
+  // Список слов
   if (showWords) {
-    const dividerY = startY + gridHeight + (isMiniature ? 20 : 30);
+    const dividerY = startY + gridHeight + (isMiniature ? 15 : 30);
     ctx.beginPath();
     ctx.moveTo(padding, dividerY);
     ctx.lineTo(totalWidth - padding, dividerY);
     ctx.strokeStyle = '#d1d5db';
     ctx.lineWidth = isMiniature ? 1 : 2;
-    ctx.setLineDash([isMiniature ? 4 : 6, isMiniature ? 3 : 4]);
+    ctx.setLineDash([isMiniature ? 3 : 6, isMiniature ? 2 : 4]);
     ctx.stroke();
     ctx.setLineDash([]);
     
     ctx.fillStyle = '#4b5563';
-    ctx.font = `bold ${isMiniature ? 12 : 16}px Arial, sans-serif`;
-    ctx.fillText('Список слов:', totalWidth / 2, dividerY + (isMiniature ? 12 : 20));
+    ctx.font = `bold ${isMiniature ? 11 : 16}px Arial, sans-serif`;
+    ctx.fillText('Список слов:', totalWidth / 2, dividerY + (isMiniature ? 10 : 20));
     
-    ctx.font = `${isMiniature ? 10 : 14}px Arial, sans-serif`;
+    ctx.font = `${isMiniature ? 9 : 14}px Arial, sans-serif`;
     let currentX = padding;
-    let currentY = dividerY + (isMiniature ? 35 : 50);
-    const rowHeight = isMiniature ? 20 : 32;
+    let currentY = dividerY + (isMiniature ? 28 : 50);
+    const rowHeight = isMiniature ? 18 : 32;
     
     result.placedWords.forEach((pw) => {
-      const textWidth = ctx.measureText(pw.word).width + (isMiniature ? 16 : 24);
+      const textWidth = ctx.measureText(pw.word).width + (isMiniature ? 12 : 24);
       if (currentX + textWidth > totalWidth - padding && currentX > padding) {
         currentX = padding;
         currentY += rowHeight;
@@ -114,16 +112,16 @@ const generateCanvas = (
       ctx.fillStyle = '#f3e8ff';
       if (ctx.roundRect) {
         ctx.beginPath();
-        ctx.roundRect(currentX, currentY - (isMiniature ? 10 : 14), textWidth, isMiniature ? 20 : 28, isMiniature ? 4 : 6);
+        ctx.roundRect(currentX, currentY - (isMiniature ? 9 : 14), textWidth, isMiniature ? 18 : 28, isMiniature ? 3 : 6);
         ctx.fill();
       } else {
-        ctx.fillRect(currentX, currentY - (isMiniature ? 10 : 14), textWidth, isMiniature ? 20 : 28);
+        ctx.fillRect(currentX, currentY - (isMiniature ? 9 : 14), textWidth, isMiniature ? 18 : 28);
       }
       ctx.fillStyle = '#6b21a8';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(pw.word, currentX + textWidth / 2, currentY);
-      currentX += textWidth + (isMiniature ? 6 : 8);
+      currentX += textWidth + (isMiniature ? 5 : 8);
     });
   }
   
@@ -135,7 +133,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [config, setConfig] = useState<WordSearchConfig>({ gridSize: 10, difficulty: 'medium' });
   const [results, setResults] = useState<WordSearchResult[]>([]);
   const [showAnswers, setShowAnswers] = useState(false);
-  const [showWordList, setShowWordList] = useState(true); // Новая настройка
+  const [showWordList, setShowWordList] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [batchCount, setBatchCount] = useState(1);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
@@ -167,58 +165,77 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     setIsExportingPDF(true);
     triggerHaptic('medium');
     
-    // Небольшая задержка для обновления UI
     await new Promise(resolve => setTimeout(resolve, 100));
     
     const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth(); // 210 mm (A4)
-    const pageHeight = doc.internal.pageSize.getHeight(); // 297 mm (A4)
+    const pageWidth = doc.internal.pageSize.getWidth(); // 210 мм (A4)
+    const pageHeight = doc.internal.pageSize.getHeight(); // 297 мм (A4)
+    const margin = 10;
+    const usableWidth = pageWidth - margin * 2; // 190 мм
     
-    // 1. Генерируем основные варианты для учеников
+    // 1. Генерируем основные варианты для учеников (по 1 на страницу)
     for (let i = 0; i < results.length; i++) {
       if (i > 0) doc.addPage();
-      
       const canvas = generateCanvas(results[i], false, showWordList, i + 1, false);
       const imgData = canvas.toDataURL('image/png');
-      
-      // Масштабируем под ширину A4 с отступами 10 мм
-      const imgWidth = pageWidth - 20;
+      const imgWidth = usableWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
     }
     
-    // 2. Добавляем страницу с ответами для педагога
+    // 2. Страница с ответами для педагога (по 6 миниатюр на страницу: 2 колонки × 3 строки)
     doc.addPage();
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(120, 50, 150); // Фиолетовый оттенок
-    doc.text("ОТВЕТЫ ДЛЯ ПЕДАГОГА", pageWidth / 2, 15, { align: "center" });
     
-    let yPos = 25;
+    // Собираем список слов из первого варианта (обычно он одинаковый для всех)
+    const wordListString = results[0].placedWords.map(pw => pw.word).join(', ');
     
-    for (let i = 0; i < results.length; i++) {
-      // Генерируем миниатюру с подсвеченными ответами (без списка слов для экономии места)
-      const miniCanvas = generateCanvas(results[i], true, false, i + 1, true);
-      const miniImgData = miniCanvas.toDataURL('image/png');
+    const itemsPerPage = 6;
+    const cols = 2;
+    const rows = 3;
+    const gap = 10;
+    const colWidth = (usableWidth - gap) / cols; // ~90 мм
+    const headerHeight = 35;
+    const rowHeight = (pageHeight - margin * 2 - headerHeight - (rows - 1) * gap) / rows; // ~74 мм
+    
+    const totalPagesForAnswers = Math.ceil(results.length / itemsPerPage);
+    
+    for (let p = 0; p < totalPagesForAnswers; p++) {
+      if (p > 0) doc.addPage();
       
-      const miniWidth = pageWidth - 20;
-      const miniHeight = (miniCanvas.height * miniWidth) / miniCanvas.width;
-      
-      // Проверяем, помещается ли миниатюра на текущую страницу
-      if (yPos + miniHeight > pageHeight - 15) {
-        doc.addPage();
-        yPos = 15;
-      }
-      
-      doc.setFontSize(12);
+      // Заголовок страницы
+      doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(31, 41, 55);
-      doc.text(`Вариант ${i + 1}`, 10, yPos);
-      yPos += 6;
+      doc.setTextColor(120, 50, 150);
+      doc.text("ОТВЕТЫ ДЛЯ ПЕДАГОГА", pageWidth / 2, margin + 10, { align: "center" });
       
-      doc.addImage(miniImgData, 'PNG', 10, yPos, miniWidth, miniHeight);
-      yPos += miniHeight + 15;
+      // Список слов в заголовке (с автоматическим переносом)
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      const splitWords = doc.splitTextToSize(`Зашифрованные слова: ${wordListString}`, usableWidth);
+      doc.text(splitWords, pageWidth / 2, margin + 18, { align: "center" });
+      
+      const startY = margin + headerHeight;
+      
+      // Рисуем 6 миниатюр на странице
+      for (let i = 0; i < itemsPerPage; i++) {
+        const globalIndex = p * itemsPerPage + i;
+        if (globalIndex >= results.length) break;
+        
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        
+        const x = margin + col * (colWidth + gap);
+        const y = startY + row * (rowHeight + gap);
+        
+        const miniCanvas = generateCanvas(results[globalIndex], true, false, globalIndex + 1, true);
+        const miniImgData = miniCanvas.toDataURL('image/png');
+        
+        const imgW = colWidth;
+        const imgH = (miniCanvas.height * imgW) / miniCanvas.width;
+        
+        doc.addImage(miniImgData, 'PNG', x, y, imgW, imgH);
+      }
     }
     
     doc.save('филворды_с_ответами.pdf');
@@ -319,25 +336,28 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
 
         {results.length > 0 && (
           <div className="flex flex-col gap-3">
-            <button
-              onClick={() => { setShowAnswers(!showAnswers); triggerHaptic('light'); }}
-              className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors ${
-                showAnswers ? 'bg-green-100 text-green-700 border-2 border-green-300' : 'bg-white text-gray-600 border-2 border-gray-200'
-              }`}
-            >
-              <Check className="w-5 h-5" />
-              {showAnswers ? 'Скрыть ответы на сетке' : 'Показать ответы на сетке (ключ)'}
-            </button>
-            
-            <button
-              onClick={() => { setShowWordList(!showWordList); triggerHaptic('light'); }}
-              className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors ${
-                showWordList ? 'bg-blue-100 text-blue-700 border-2 border-blue-300' : 'bg-white text-gray-600 border-2 border-gray-200'
-              }`}
-            >
-              <Grid3x3 className="w-5 h-5" />
-              {showWordList ? 'Скрыть список слов' : 'Показать список слов'}
-            </button>
+            {/* Компактные кнопки в одну строку */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowAnswers(!showAnswers); triggerHaptic('light'); }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                  showAnswers ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-white text-gray-600 border border-gray-200'
+                }`}
+              >
+                <Check className="w-4 h-4" />
+                {showAnswers ? 'Скрыть ответы' : 'Показать ответы'}
+              </button>
+              
+              <button
+                onClick={() => { setShowWordList(!showWordList); triggerHaptic('light'); }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                  showWordList ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-white text-gray-600 border border-gray-200'
+                }`}
+              >
+                <Grid3x3 className="w-4 h-4" />
+                {showWordList ? 'Скрыть слова' : 'Показать слова'}
+              </button>
+            </div>
 
             <button
               onClick={downloadAsPDF}
@@ -400,10 +420,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                                   ? 'bg-yellow-200 border-yellow-400 text-yellow-900' 
                                   : 'bg-gray-50 border-gray-200 text-gray-800'
                               }`}
-                              style={{ 
-                                width: cellSize, 
-                                height: cellSize,
-                              }}
+                              style={{ width: cellSize, height: cellSize }}
                             >
                               {letter}
                             </div>
