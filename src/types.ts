@@ -1,20 +1,21 @@
-export interface LessonStage {
+export interface Stage {
   name: string;
-  duration: number;
+  duration: number; // minutes
 }
 
 export interface LessonTemplate {
   id: string;
-  title: string;
-  stages: LessonStage[];
+  name: string;
+  stages: Stage[];
   custom?: boolean;
 }
 
-// === ФЛЭШ-КАРТОЧКИ ===
+export type FlashCardStatus = 'new' | 'learning' | 'learned' | 'mistake';
+
 export interface FlashCard {
   id: string;
-  sides: string[]; // 2 стороны = Lame, 3+ = Insane
-  status: 'new' | 'learning' | 'learned' | 'mistake';
+  sides: string[]; // 2 sides = "Lame", 3+ sides = "Insane"
+  status: FlashCardStatus;
   lastReviewed?: number;
   errorCount?: number;
 }
@@ -23,6 +24,6 @@ export interface Deck {
   id: string;
   title: string;
   cards: FlashCard[];
-  createdAt: number;
+  createdAt?: number;
   lastStudied?: number;
 }
