@@ -4,6 +4,7 @@ import type { Deck } from '@/types';
 import { loadDecks } from '@/lib/storage';
 import { triggerHaptic } from '@/lib/haptic';
 import BackButton from './BackButton';
+import YandexAdBlock from './YandexAdBlock'; // <-- ДОБАВЛЕН ИМПОРТ
 
 interface QuizScreenProps {
   deckId: string;
@@ -126,7 +127,6 @@ export default function QuizScreen({ deckId, onBack }: QuizScreenProps) {
     } else if (side === 'right' && selectedLeft) {
       const pair = assignPairs.find(p => p.id === selectedLeft);
       if (pair && pair.right === assignPairs.find(p => p.id === id)?.right) {
-        // Правильное совпадение
         setMatchedPairs([...matchedPairs, selectedLeft]);
         setScore((prev) => prev + 1);
         triggerHaptic('heavy');
@@ -135,7 +135,6 @@ export default function QuizScreen({ deckId, onBack }: QuizScreenProps) {
       }
       setSelectedLeft(null);
       
-      // Проверяем, все ли пары найдены
       if (matchedPairs.length + 1 === assignPairs.length) {
         setTimeout(() => setQuizComplete(true), 500);
       }
@@ -165,7 +164,6 @@ export default function QuizScreen({ deckId, onBack }: QuizScreenProps) {
           </div>
         </header>
         <main className="flex-1 max-w-md mx-auto w-full px-5 py-6 flex flex-col gap-4">
-          {/* Количество вопросов */}
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <label className="block text-sm font-semibold text-purple-700 mb-2">
               Количество вопросов: {questionCount}
@@ -180,7 +178,6 @@ export default function QuizScreen({ deckId, onBack }: QuizScreenProps) {
             />
           </div>
 
-          {/* Типы тестов */}
           <button
             onClick={() => startQuiz('choice')}
             className="w-full bg-white border-2 border-purple-200 rounded-2xl p-5 text-left active:scale-95 transition-transform"
@@ -203,6 +200,7 @@ export default function QuizScreen({ deckId, onBack }: QuizScreenProps) {
             <h3 className="text-lg font-bold text-purple-700 mb-1">Соответствие</h3>
             <p className="text-sm text-gray-600">Соедините пары понятий</p>
           </button>
+          <YandexAdBlock /> {/* <-- ДОБАВЛЕН КОМПОНЕНТ РЕКЛАМЫ */}
         </main>
       </div>
     );
@@ -246,6 +244,7 @@ export default function QuizScreen({ deckId, onBack }: QuizScreenProps) {
               </button>
             </div>
           </div>
+          <YandexAdBlock /> {/* <-- ДОБАВЛЕН КОМПОНЕНТ РЕКЛАМЫ */}
         </main>
       </div>
     );
@@ -269,7 +268,6 @@ export default function QuizScreen({ deckId, onBack }: QuizScreenProps) {
         </header>
         <main className="flex-1 max-w-md mx-auto w-full px-5 py-6">
           <div className="grid grid-cols-2 gap-3">
-            {/* Левая колонка */}
             <div className="space-y-2">
               {assignPairs.map((pair) => {
                 const isMatched = matchedPairs.includes(pair.id);
@@ -292,7 +290,6 @@ export default function QuizScreen({ deckId, onBack }: QuizScreenProps) {
                 );
               })}
             </div>
-            {/* Правая колонка */}
             <div className="space-y-2">
               {shuffledRights.map((pair) => {
                 const isMatched = matchedPairs.includes(pair.id);
@@ -316,6 +313,7 @@ export default function QuizScreen({ deckId, onBack }: QuizScreenProps) {
           <p className="text-center text-sm text-gray-500 mt-4">
             Нажми на элемент слева, затем на соответствующий справа
           </p>
+          <YandexAdBlock /> {/* <-- ДОБАВЛЕН КОМПОНЕНТ РЕКЛАМЫ */}
         </main>
       </div>
     );
@@ -413,6 +411,7 @@ export default function QuizScreen({ deckId, onBack }: QuizScreenProps) {
             Далее <ArrowRight size={20} />
           </button>
         )}
+        <YandexAdBlock /> {/* <-- ДОБАВЛЕН КОМПОНЕНТ РЕКЛАМЫ */}
       </main>
     </div>
   );
