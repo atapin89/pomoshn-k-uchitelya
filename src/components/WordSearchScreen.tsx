@@ -184,7 +184,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     }
     
     // 2. Создаем Canvas для страницы ответов (чтобы поддержать кириллицу)
-    const itemsPerPage = 6;
+    const itemsPerPage = 4; // ИЗМЕНЕНО: 4 вместо 6
     const totalPagesForAnswers = Math.ceil(results.length / itemsPerPage);
     
     for (let p = 0; p < totalPagesForAnswers; p++) {
@@ -237,11 +237,11 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         ctx.fillText(currentLine, pageWidth / 2, yPos);
       }
       
-      // Рисуем 6 миниатюр на странице
+      // Рисуем 4 миниатюры на странице (сетка 2×2)
       const cols = 2;
-      const rows = 3;
-      const gap = 10;
-      const headerHeight = 55;
+      const rows = 2; // ИЗМЕНЕНО: 2 вместо 3
+      const gap = 15; // ИЗМЕНЕНО: увеличен отступ для лучшего вида
+      const headerHeight = 60; // ИЗМЕНЕНО: больше места для заголовка
       const colWidth = (usableWidth - gap) / cols;
       const rowHeight = (pageHeight - margin * 2 - headerHeight - (rows - 1) * gap) / rows;
       const startY = margin + headerHeight;
