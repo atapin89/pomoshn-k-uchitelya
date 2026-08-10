@@ -21,6 +21,8 @@ export default function App() {
   const [activeTemplate, setActiveTemplate] = useState<LessonTemplate | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<LessonTemplate | null>(null);
+  
+  // Состояния для флэш-карточек
   const [studyDeckId, setStudyDeckId] = useState<string | null>(null);
   const [quizDeckId, setQuizDeckId] = useState<string | null>(null);
 
@@ -70,22 +72,22 @@ export default function App() {
 
   const allTemplates = [...presetTemplates, ...customTemplates];
 
-  // Главная страница
+  // 1. Главная страница
   if (route === 'home') {
     return <HomeScreen onNavigate={setRoute} />;
   }
 
-  // Генератор
+  // 2. Генератор
   if (route === 'generator') {
     return <GeneratorScreen onBack={() => setRoute('home')} />;
   }
 
-  // Контроль шума
+  // 3. Контроль шума
   if (route === 'noise') {
     return <NoiseMonitorScreen onBack={() => setRoute('home')} />;
   }
 
-  // Флэш-карточки (список колод)
+  // 4. Флэш-карточки (Дашборд)
   if (route === 'flashcards') {
     return (
       <FlashcardsScreen
@@ -102,7 +104,7 @@ export default function App() {
     );
   }
 
-  // Изучение карточек
+  // 5. Режим изучения (Swiper)
   if (route === 'study' && studyDeckId) {
     return (
       <StudyScreen
@@ -112,7 +114,7 @@ export default function App() {
     );
   }
 
-  // Тест карточек
+  // 6. Режим тестирования (Quiz)
   if (route === 'quiz' && quizDeckId) {
     return (
       <QuizScreen
@@ -122,7 +124,7 @@ export default function App() {
     );
   }
 
-  // Активный таймер
+  // 7. Активный таймер урока
   if (activeTemplate) {
     return (
       <ActiveTimer
@@ -133,7 +135,7 @@ export default function App() {
     );
   }
 
-  // Список шаблонов таймера
+  // 8. Список шаблонов таймера (по умолчанию)
   return (
     <>
       <TemplateList
