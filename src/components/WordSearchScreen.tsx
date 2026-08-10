@@ -5,7 +5,6 @@ import type { WordSearchResult, WordSearchConfig } from '@/types';
 import { triggerHaptic } from '@/lib/haptic';
 import BackButton from './BackButton';
 import YandexAdBlock from './YandexAdBlock';
-import html2canvas from 'html2canvas';
 
 export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [wordsInput, setWordsInput] = useState('МАТЕМАТИКА\nУЧИТЕЛЬ\nШКОЛА\nУРОК\nЗНАНИЯ');
@@ -28,126 +27,138 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     setIsGenerating(false);
   };
 
-  const downloadAsImage = async (result: WordSearchResult, index: number) => {
+  // НОВЫЙ ПОДХОД: Рисуем изображение напрямую на Canvas для идеального центрирования
+  const downloadAsImage = (result: WordSearchResult, index: number) => {
     triggerHaptic('light');
     
-    const exportContainer = document.createElement('div');
-    exportContainer.style.position = 'fixed';
-    exportContainer.style.top = '-9999px';
-    exportContainer.style.backgroundColor = '#ffffff';
-    exportContainer.style.padding = '40px';
-    exportContainer.style.fontFamily = 'Arial, sans-serif';
-    
-    // Заголовок
-    const title = document.createElement('h2');
-    title.textContent = 'Найди слова:';
-    title.style.fontSize = '24px';
-    title.style.fontWeight = 'bold';
-    title.style.textAlign = 'center';
-    title.style.marginBottom = '24px';
-    title.style.color = '#1f2937';
-    exportContainer.appendChild(title);
-    
-    // Сетка
     const gridSize = result.gridSize;
     const cellSize = gridSize >= 20 ? 28 : gridSize === 15 ? 32 : 36;
-    const fontSize = gridSize >= 20 ? 14 : gridSize === 15 ? 16 : 18; // Число, а не строка с px
+    const fontSize = gridSize >= 20 ? 14 : gridSize === 15 ? 16 : 18;
     const gap = 2;
+    const padding = 40;
     
-    const gridContainer = document.createElement('div');
-    gridContainer.style.display = 'grid';
-    gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, ${cellSize}px)`;
-    gridContainer.style.gap = `${gap}px`;
-    gridContainer.style.margin = '0 auto 24px';
+    const gridWidth = gridSize * cellSize + (gridSize - 1) * gap;
+    const gridHeight = gridWidth;
+    const wordListHeight = 80; // Запас для списка слов
     
-    result.grid.forEach((row, r) => {
-      row.forEach((letter, c) => {
+    const totalWidth = Math.max(gridWidth + padding * 2, 400);
+    const totalHeight = padding * 2 + 40 + gridHeight + 40 + wordListHeight;
+    
+    const canvas = document.createElement('canvas');
+    const scale = 2; // Для высокого разрешения (Retina)
+    canvas.width = totalWidth * scale;
+    canvas.height = totalHeight * scale;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.scale(scale, scale);
+    
+    // 1. Белый фон
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, totalWidth, totalHeight);
+    
+    // 2. Заголовок
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 24px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Найди слова:', totalWidth / 2, padding + 12);
+    
+    // 3. Сетка
+    const startX = (totalWidth - gridWidth) / 2;
+    const startY = padding + 40;
+    
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        const x = startX + c * (cellSize + gap);
+        const y = startY + r * (cellSize + gap);
+        const letter = result.grid[r][c];
         const isAnswer = showAnswers && result.placedWords.some(pw => 
           pw.cells.some(cell => cell.row === r && cell.col === c)
         );
         
-        // Контейнер ячейки
-        const cell = document.createElement('div');
-        cell.style.position = 'relative'; // Обязательно для абсолютного позиционирования дочернего элемента
-        cell.style.width = `${cellSize}px`;
-        cell.style.height = `${cellSize}px`;
-        cell.style.borderRadius = '6px';
-        cell.style.border = '1px solid #e5e7eb';
-        cell.style.backgroundColor = isAnswer ? '#fde047' : '#f9fafb';
+        // Фон ячейки
+        ctx.fillStyle = isAnswer ? '#fde047' : '#f9fafb';
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.lineWidth = 1;
         
-        // Сама буква с абсолютным центрированием
-        const span = document.createElement('span');
-        span.textContent = letter;
-        span.style.position = 'absolute';
-        span.style.left = '50%';
-        span.style.top = '50%';
-        span.style.transform = 'translate(-50%, -50%)'; // Математически точное центрирование
-        span.style.fontSize = `${fontSize}px`;
-        span.style.fontWeight = 'bold';
-        span.style.color = isAnswer ? '#854d0e' : '#1f2937';
-        span.style.lineHeight = '1';
-        span.style.fontFamily = 'Arial, sans-serif';
-        span.style.whiteSpace = 'nowrap';
+        // Закругленные углы (с фоллбеком для старых браузеров)
+        if (ctx.roundRect) {
+          ctx.beginPath();
+          ctx.roundRect(x, y, cellSize, cellSize, 6);
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          ctx.fillRect(x, y, cellSize, cellSize);
+          ctx.strokeRect(x, y, cellSize, cellSize);
+        }
         
-        cell.appendChild(span);
-        gridContainer.appendChild(cell);
-      });
-    });
+        // Буква (ИДЕАЛЬНОЕ ЦЕНТРИРОВАНИЕ)
+        ctx.fillStyle = isAnswer ? '#854d0e' : '#1f2937';
+        ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        // +1 пиксель для оптической компенсации высоты заглавных букв
+        ctx.fillText(letter, x + cellSize / 2, y + cellSize / 2 + 1);
+      }
+    }
     
-    exportContainer.appendChild(gridContainer);
+    // 4. Разделитель
+    const dividerY = startY + gridHeight + 30;
+    ctx.beginPath();
+    ctx.moveTo(padding, dividerY);
+    ctx.lineTo(totalWidth - padding, dividerY);
+    ctx.strokeStyle = '#d1d5db';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
     
-    // Разделитель
-    const divider = document.createElement('div');
-    divider.style.borderTop = '2px dashed #d1d5db';
-    divider.style.margin = '24px 0';
-    exportContainer.appendChild(divider);
+    // 5. Заголовок списка слов
+    ctx.fillStyle = '#4b5563';
+    ctx.font = 'bold 16px Arial, sans-serif';
+    ctx.fillText('Список слов:', totalWidth / 2, dividerY + 20);
     
-    // Список слов
-    const wordsTitle = document.createElement('p');
-    wordsTitle.textContent = 'Список слов:';
-    wordsTitle.style.textAlign = 'center';
-    wordsTitle.style.marginBottom = '16px';
-    wordsTitle.style.color = '#4b5563';
-    wordsTitle.style.fontSize = '16px';
-    wordsTitle.style.fontWeight = '600';
-    exportContainer.appendChild(wordsTitle);
-    
-    const wordsContainer = document.createElement('div');
-    wordsContainer.style.display = 'flex';
-    wordsContainer.style.flexWrap = 'wrap';
-    wordsContainer.style.justifyContent = 'center';
-    wordsContainer.style.gap = '8px';
+    // 6. Бейджи со словами
+    ctx.font = '600 14px Arial, sans-serif';
+    let currentX = padding;
+    let currentY = dividerY + 50;
+    const rowHeight = 32;
     
     result.placedWords.forEach((pw) => {
-      const badge = document.createElement('span');
-      badge.textContent = pw.word;
-      badge.style.padding = '6px 12px';
-      badge.style.borderRadius = '6px';
-      badge.style.backgroundColor = '#f3e8ff';
-      badge.style.color = '#6b21a8';
-      badge.style.fontSize = '14px';
-      badge.style.fontWeight = '600';
-      wordsContainer.appendChild(badge);
+      const textWidth = ctx.measureText(pw.word).width + 24; // 12px отступы
+      
+      // Перенос на новую строку, если не помещается
+      if (currentX + textWidth > totalWidth - padding && currentX > padding) {
+        currentX = padding;
+        currentY += rowHeight;
+      }
+      
+      // Фон бейджа
+      ctx.fillStyle = '#f3e8ff';
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(currentX, currentY - 14, textWidth, 28, 6);
+        ctx.fill();
+      } else {
+        ctx.fillRect(currentX, currentY - 14, textWidth, 28);
+      }
+      
+      // Текст бейджа
+      ctx.fillStyle = '#6b21a8';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(pw.word, currentX + textWidth / 2, currentY);
+      
+      currentX += textWidth + 8; // 8px зазор между словами
     });
     
-    exportContainer.appendChild(wordsContainer);
-    document.body.appendChild(exportContainer);
-    
-    const canvas = await html2canvas(exportContainer, {
-      backgroundColor: '#ffffff',
-      scale: 2,
-      logging: false,
-      useCORS: true,
-      windowHeight: exportContainer.offsetHeight + 80,
-      windowWidth: gridSize * (cellSize + gap) + 160
-    });
-    
+    // 7. Скачивание
     const link = document.createElement('a');
-    link.download = `филворд_${index + 1}.png`;
+    link.download = `филворд_вариант_${index + 1}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
-    
-    document.body.removeChild(exportContainer);
   };
 
   const getGridStyles = (size: number) => {
