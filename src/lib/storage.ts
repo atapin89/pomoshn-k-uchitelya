@@ -1,63 +1,26 @@
-import type { LessonTemplate, Deck } from '@/types';
+import type { LessonTemplate, Deck } from '../types';
 
-const CUSTOM_KEY = 'lesson-timer-custom-templates';
-const DECKS_KEY = 'flashcards-decks';
+// === ШАБЛОНЫ ТАЙМЕРА ===
+const TEMPLATES_KEY = 'teacher_helper_templates_v1';
 
-export function loadCustomTemplates(): LessonTemplate[] {
+export const loadCustomTemplates = (): LessonTemplate[] => {
   try {
-    const raw = localStorage.getItem(CUSTOM_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (t) =>
-        t &&
-        typeof t.id === 'string' &&
-        typeof t.name === 'string' &&
-        Array.isArray(t.stages),
-    );
+    const data = localStorage.getItem(TEMPLATES_KEY);
+    return data ? JSON.parse(data) : [];
   } catch {
     return [];
   }
-}
+};
 
-export function saveCustomTemplates(templates: LessonTemplate[]): void {
+export const saveCustomTemplates = (templates: LessonTemplate[]): void => {
   try {
-    localStorage.setItem(CUSTOM_KEY, JSON.stringify(templates));
-  } catch {
-    // ignore quota errors
+    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+  } catch (e) {
+    console.error('Failed to save templates', e);
   }
-}
-
-export function loadDecks(): Deck[] {
-  try {
-    const raw = localStorage.getItem(DECKS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (d) =>
-        d &&
-        typeof d.id === 'string' &&
-        typeof d.title === 'string' &&
-        Array.isArray(d.cards),
-    );
-  } catch {
-    return [];
-  }
-}
-
-export function saveDecks(decks: Deck[]): void {
-  try {
-    localStorage.setItem(DECKS_KEY, JSON.stringify(decks));
-  } catch {
-    // ignore quota errors
-  }
-}
+};
 
 // === ФЛЭШ-КАРТОЧКИ ===
-import type { Deck } from '../types';
-
 const DECKS_KEY = 'teacher_helper_decks_v2';
 
 export const loadDecks = (): Deck[] => {
