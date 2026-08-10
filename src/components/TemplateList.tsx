@@ -2,6 +2,7 @@ import { Clock, ChevronRight, Plus, BookOpen, Trash2, Pencil } from 'lucide-reac
 import type { LessonTemplate } from '@/types';
 import { totalDurationSeconds, formatTime } from '@/lib/format';
 import BackButton from './BackButton';
+import YandexAdBlock from './YandexAdBlock'; // <-- ДОБАВЛЕН ИМПОРТ
 
 interface TemplateListProps {
   templates: LessonTemplate[];
@@ -105,6 +106,9 @@ export default function TemplateList({
             <p className="text-sm text-gray-500 mt-0.5">Настройте этапы и длительность</p>
           </div>
         </button>
+
+        {/* <-- ДОБАВЛЕН КОМПОНЕНТ РЕКЛАМЫ --> */}
+        <YandexAdBlock />
       </main>
     </div>
   );
