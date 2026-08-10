@@ -27,3 +27,24 @@ export interface Deck {
   createdAt?: number;
   lastStudied?: number;
 }
+
+// === ФИЛВОРДЫ (WORD SEARCH) ===
+export type WordDirection = 'horizontal' | 'vertical' | 'diagonal' | 'backward';
+
+export interface PlacedWord {
+  word: string;
+  cells: { row: number; col: number }[]; // Координаты букв для подсветки ответов
+}
+
+export interface WordSearchResult {
+  id: string;
+  grid: string[][]; // Двумерный массив букв
+  placedWords: PlacedWord[];
+  failedWords: string[]; // Слова, которые не поместились в сетку
+  gridSize: number;
+}
+
+export interface WordSearchConfig {
+  gridSize: number; // 10, 15, 20
+  difficulty: 'easy' | 'medium' | 'hard'; // Влияет на доступные направления слов
+}
