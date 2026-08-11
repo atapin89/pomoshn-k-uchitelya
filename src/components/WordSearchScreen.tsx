@@ -202,21 +202,21 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, pageWidth, pageHeight);
       
-      // Заголовок (СДВИНУТ ВЫШЕ и выровнен по верху)
+      // Заголовок (по тому же принципу, что и "Вариант X" в generateCanvas)
       ctx.fillStyle = '#783296';
-      ctx.font = 'bold 18px Arial, sans-serif';
+      ctx.font = 'bold 20px Arial, sans-serif';
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'top'; // ИЗМЕНЕНО: top вместо middle
-      ctx.fillText('ОТВЕТЫ ДЛЯ ПЕДАГОГА', pageWidth / 2, 10); // ИЗМЕНЕНО: 10 вместо 20
+      ctx.textBaseline = 'middle';
+      ctx.fillText('ОТВЕТЫ ДЛЯ ПЕДАГОГА', pageWidth / 2, 20);
       
-      // Список слов (СДВИНУТ ВЫШЕ)
+      // Список слов
       const wordListString = results[0].placedWords.map(pw => pw.word).join(', ');
       ctx.fillStyle = '#646464';
-      ctx.font = '11px Arial, sans-serif';
+      ctx.font = '12px Arial, sans-serif';
       
       const wordsLines = wordListString.split(', ');
       let currentLine = 'Зашифрованные слова: ';
-      let yPos = 22; // ИЗМЕНЕНО: 22 вместо 32
+      let yPos = 35;
       
       wordsLines.forEach((word, idx) => {
         const testLine = currentLine + word + (idx < wordsLines.length - 1 ? ', ' : '');
@@ -225,7 +225,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         if (metrics.width > usableWidth && currentLine !== 'Зашифрованные слова: ') {
           ctx.fillText(currentLine, pageWidth / 2, yPos);
           currentLine = word + ', ';
-          yPos += 13; // ИЗМЕНЕНО: 13 вместо 15
+          yPos += 15;
         } else {
           currentLine = testLine;
         }
@@ -235,11 +235,11 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         ctx.fillText(currentLine, pageWidth / 2, yPos);
       }
       
-      // Миниатюры (СДВИНУТЫ ВЫШЕ, отступы уменьшены)
+      // Миниатюры
       const cols = 2;
       const rows = 2;
-      const gap = 12; // ИЗМЕНЕНО: 12 вместо 15
-      const headerHeight = 45; // ИЗМЕНЕНО: 45 вместо 60 (освобождаем место для миниатюр)
+      const gap = 12;
+      const headerHeight = 55; // Достаточно места для заголовка и списка слов
       const colWidth = (usableWidth - gap) / cols;
       const rowHeight = (pageHeight - margin * 2 - headerHeight - (rows - 1) * gap) / rows;
       const startY = margin + headerHeight;
