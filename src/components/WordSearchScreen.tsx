@@ -205,7 +205,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 10;
     const usableWidth = pageWidth - margin * 2;
-    const usableHeight = pageHeight - margin * 2;
     
     // 1. Основные варианты для учеников (по 1 на страницу)
     for (let i = 0; i < results.length; i++) {
@@ -217,8 +216,8 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
     }
     
-    // 2. Страницы ответов: 4 миниатюры на лист (2x2)
-    const itemsPerPage = 4;
+    // 2. Страницы ответов: 1 миниатюра на лист (ПОЛНЫЙ РАЗМЕР)
+    const itemsPerPage = 1; // ИЗМЕНЕНО: 1 вместо 4
     const totalPagesForAnswers = Math.ceil(results.length / itemsPerPage);
     
     for (let p = 0; p < totalPagesForAnswers; p++) {
@@ -236,31 +235,13 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, pageWidth, pageHeight);
       
-      // Сетка 2x2
-      const cols = 2;
-      const rows = 2;
-      const gap = 15;
+      // Одна большая миниатюра на всю страницу
+      const miniCanvas = generateCanvas(results[p], true, false, p + 1, false); // false = не миниатюра
+      const imgData = miniCanvas.toDataURL('image/png');
+      const imgWidth = usableWidth;
+      const imgHeight = (miniCanvas.height * imgWidth) / miniCanvas.width;
       
-      const colWidth = (usableWidth - (cols - 1) * gap) / cols;
-      const rowHeight = (usableHeight - (rows - 1) * gap) / rows;
-      const startY = margin;
-      
-      for (let i = 0; i < itemsPerPage; i++) {
-        const globalIndex = p * itemsPerPage + i;
-        if (globalIndex >= results.length) break;
-        
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        
-        const x = margin + col * (colWidth + gap);
-        const y = startY + row * (rowHeight + gap);
-        
-        const miniCanvas = generateCanvas(results[globalIndex], true, false, globalIndex + 1, true);
-        const imgW = colWidth;
-        const imgH = (miniCanvas.height * imgW) / miniCanvas.width;
-        
-        ctx.drawImage(miniCanvas, x * scale, y * scale, imgW * scale, imgH * scale);
-      }
+      ctx.drawImage(miniCanvas, margin * scale, margin * scale, imgWidth * scale, imgHeight * scale);
       
       const answerImgData = answerCanvas.toDataURL('image/png');
       doc.addImage(answerImgData, 'PNG', 0, 0, pageWidth, pageHeight);
@@ -342,15 +323,13 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
             {isGenerating ? 'Генерация...' : 'Создать 1 вариант'}
           </button>
           
-          {/* Пакетная генерация — перестроенный блок */}
+          {/* Пакетная генерация — с увеличенным ползунком */}
           <div className="space-y-3 pt-2 border-t border-purple-100">
-            {/* Строка 1: заголовок */}
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-purple-700">Пакетная генерация</span>
               <span className="text-sm font-bold text-purple-700">{batchCount} шт.</span>
             </div>
             
-            {/* Строка 2: ползунок + кнопки */}
             <div className="flex items-center gap-2">
               <input 
                 type="range" 
@@ -359,7 +338,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                 value={batchCount} 
                 onChange={(e) => setBatchCount(Number(e.target.value))}
                 className="flex-1 accent-purple-600"
-                style={{ maxWidth: '140px' }}
               />
               <button
                 onClick={() => handleGenerate(batchCount)}
