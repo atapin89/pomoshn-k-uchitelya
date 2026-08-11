@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, RefreshCw, Check, AlertTriangle, Grid3x3, FileText } from 'lucide-react';
+import { Download, RefreshCw, Check, AlertTriangle, Grid3x3, FileText, Share2 } from 'lucide-react';
 import { generateBatch } from '@/lib/wordSearchGenerator';
 import type { WordSearchResult, WordSearchConfig } from '@/types';
 import { triggerHaptic } from '@/lib/haptic';
@@ -7,7 +7,7 @@ import BackButton from './BackButton';
 import YandexAdBlock from './YandexAdBlock';
 import { jsPDF } from 'jspdf';
 
-// Универсальная функция для рисования филворда на Canvas (для PNG и PDF)
+// Универсальная функция для рисования филворда на Canvas
 const generateCanvas = (
   result: WordSearchResult,
   showAnswers: boolean,
@@ -40,7 +40,6 @@ const generateCanvas = (
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, totalWidth, totalHeight);
   
-  // Заголовок
   ctx.fillStyle = '#1f2937';
   ctx.font = `bold ${isMiniature ? 14 : 24}px Arial, sans-serif`;
   ctx.textAlign = 'center';
@@ -50,7 +49,6 @@ const generateCanvas = (
   const startX = (totalWidth - gridWidth) / 2;
   const startY = padding + (isMiniature ? 25 : 40);
   
-  // Сетка
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
       const x = startX + c * (cellSize + gap);
@@ -82,7 +80,6 @@ const generateCanvas = (
     }
   }
   
-  // Стрелки направления для ответов
   if (showAnswers) {
     result.placedWords.forEach(pw => {
       if (pw.cells.length > 1) {
@@ -115,7 +112,6 @@ const generateCanvas = (
     });
   }
   
-  // Список слов
   if (showWords) {
     const dividerY = startY + gridHeight + (isMiniature ? 15 : 30);
     ctx.beginPath();
@@ -161,6 +157,47 @@ const generateCanvas = (
   return canvas;
 };
 
+// Универсальная функция для скачивания/шаринга на мобильных устройствах
+const handleMobileExport = async (blob: Blob, filename: string, mimeType: string) => {
+  // 1. Попытка использовать нативный "Поделиться" (самый надежный способ на мобильных)
+  if (navigator.share && navigator.canShare) {
+    const file = new File([blob], filename, { type: mimeType });
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'Филворд',
+        });
+        return; // Успешно поделились или сохранили
+      } catch (err) {
+        console.log('Share canceled or failed', err);
+      }
+    }
+  }
+
+  // 2. Попытка использовать MAX Bridge downloadFile (если доступен в среде)
+  if (typeof window !== 'undefined' && (window as any).WebApp?.downloadFile) {
+    try {
+      const url = URL.createObjectURL(blob);
+      await (window as any).WebApp.downloadFile(url, filename);
+      URL.revokeObjectURL(url);
+      return;
+    } catch (err) {
+      console.log('WebApp.downloadFile failed', err);
+    }
+  }
+
+  // 3. Фоллбэк на стандартный <a> download (работает в обычных десктопных браузерах)
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [wordsInput, setWordsInput] = useState('МАТЕМАТИКА\nУЧИТЕЛЬ\nШКОЛА\nУРОК\nЗНАНИЯ');
   const [config, setConfig] = useState<WordSearchConfig>({ gridSize: 10, difficulty: 'medium' });
@@ -170,10 +207,12 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [batchCount, setBatchCount] = useState(1);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [exportError, setExportError] = useState('');
 
   const handleGenerate = async (count: number) => {
     if (!wordsInput.trim()) return;
     setIsGenerating(true);
+    setExportError('');
     triggerHaptic('medium');
     
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -184,41 +223,55 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     setIsGenerating(false);
   };
 
-  const downloadAsImage = (result: WordSearchResult, index: number) => {
+  const downloadAsImage = async (result: WordSearchResult, index: number) => {
     triggerHaptic('light');
+    setExportError('');
     const canvas = generateCanvas(result, showAnswers, showWordList, index + 1, false);
-    const link = document.createElement('a');
-    link.download = `филворд_вариант_${index + 1}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        setExportError('Не удалось создать изображение');
+        return;
+      }
+      await handleMobileExport(blob, `филворд_вариант_${index + 1}.png`, 'image/png');
+    }, 'image/png');
   };
 
   const downloadAsPDF = async () => {
     if (results.length === 0) return;
     setIsExportingPDF(true);
+    setExportError('');
     triggerHaptic('medium');
     
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 10;
-    const usableWidth = pageWidth - margin * 2;
-    
-    // Генерируем основные варианты (по 1 на страницу) — БЕЗ страницы ответов
-    for (let i = 0; i < results.length; i++) {
-      if (i > 0) doc.addPage();
-      const canvas = generateCanvas(results[i], false, showWordList, i + 1, false);
-      const imgData = canvas.toDataURL('image/png');
-      const imgWidth = usableWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 10;
+      const usableWidth = pageWidth - margin * 2;
+      
+      for (let i = 0; i < results.length; i++) {
+        if (i > 0) doc.addPage();
+        const canvas = generateCanvas(results[i], false, showWordList, i + 1, false);
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = usableWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+      }
+      
+      // Получаем Blob вместо прямого скачивания
+      const pdfBlob = doc.output('blob');
+      await handleMobileExport(pdfBlob, 'филворды.pdf', 'application/pdf');
+      
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      setExportError('Ошибка при создании PDF. Попробуйте еще раз.');
+    } finally {
+      setIsExportingPDF(false);
+      triggerHaptic('heavy');
     }
-    
-    doc.save('филворды.pdf');
-    setIsExportingPDF(false);
-    triggerHaptic('heavy');
   };
 
   const getGridStyles = (size: number) => {
@@ -228,7 +281,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-purple-50 flex flex-col">
+    <div className="min-h-[100dvh] notebook-bg flex flex-col">
       <header className="bg-purple-700 shadow-md sticky top-0 z-10">
         <div className="max-w-md mx-auto px-5 py-4">
           <BackButton onClick={onBack} variant="light" />
@@ -292,7 +345,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
             {isGenerating ? 'Генерация...' : 'Создать 1 вариант'}
           </button>
           
-          {/* Пакетная генерация */}
           <div className="space-y-3 pt-2 border-t border-purple-100">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-purple-700">Пакетная генерация</span>
@@ -326,6 +378,13 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
             </div>
           </div>
         </section>
+
+        {exportError && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-red-700">{exportError}</p>
+          </div>
+        )}
 
         {results.length > 0 && (
           <div className="flex gap-2">
@@ -363,7 +422,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                     onClick={() => downloadAsImage(result, index)}
                     className="flex items-center gap-1.5 text-sm font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-lg transition-colors"
                   >
-                    <Download className="w-4 h-4" /> Скачать PNG
+                    <Share2 className="w-4 h-4" /> Сохранить PNG
                   </button>
                 </div>
 
@@ -429,7 +488,9 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
           })}
         </div>
 
-        <YandexAdBlock />
+        <div className="mb-4">
+          <YandexAdBlock />
+        </div>
       </main>
     </div>
   );
