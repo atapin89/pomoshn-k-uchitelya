@@ -1,8 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#22c55e" />
-  <circle cx="256" cy="268" r="140" fill="none" stroke="#fff" stroke-width="28" />
-  <path d="M256 268V168" stroke="#fff" stroke-width="28" stroke-linecap="round" />
-  <path d="M256 268l70 40" stroke="#fff" stroke-width="28" stroke-linecap="round" />
-  <circle cx="256" cy="120" r="20" fill="#fff" />
-  <rect x="200" y="96" width="112" height="32" rx="16" fill="#fff" />
+  <!-- Фиолетовый фон (как в оформлении приложения) -->
+  <rect width="512" height="512" rx="112" fill="#7e22ce" />
+  
+  <!-- Верхняя плоская часть шапочки (тулья) -->
+  <path d="M 96 220 L 256 150 L 416 220 L 256 290 Z" fill="#ffffff" />
+  
+  <!-- Основная часть шапочки (оголовье) -->
+  <path d="M 116 230 Q 256 370 396 230" fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round" />
+  
+  <!-- Кисточка -->
+  <path d="M 256 220 Q 310 270 256 340" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" />
+  <circle cx="256" cy="355" r="18" fill="#ffffff" />
 </svg>
