@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, RefreshCw, Check, AlertTriangle, Grid3x3, FileText, Share2 } from 'lucide-react';
+import { Download, RefreshCw, Check, AlertTriangle, Grid3x3, FileText, Share2, ExternalLink } from 'lucide-react';
 import { generateBatch } from '@/lib/wordSearchGenerator';
 import type { WordSearchResult, WordSearchConfig } from '@/types';
 import { triggerHaptic } from '@/lib/haptic';
@@ -157,9 +157,9 @@ const generateCanvas = (
   return canvas;
 };
 
-// Универсальная функция для скачивания/шаринга на мобильных устройствах
-const handleMobileExport = async (blob: Blob, filename: string, mimeType: string) => {
-  // 1. Попытка использовать нативный "Поделиться" (самый надежный способ на мобильных)
+// Функция для открытия/скачивания файла на мобильных устройствах
+const openOrShareFile = async (blob: Blob, filename: string, mimeType: string): Promise<boolean> => {
+  // 1. Попытка использовать нативный "Поделиться" (работает для PNG)
   if (navigator.share && navigator.canShare) {
     const file = new File([blob], filename, { type: mimeType });
     if (navigator.canShare({ files: [file] })) {
@@ -168,34 +168,36 @@ const handleMobileExport = async (blob: Blob, filename: string, mimeType: string
           files: [file],
           title: 'Филворд',
         });
-        return; // Успешно поделились или сохранили
+        return true;
       } catch (err) {
         console.log('Share canceled or failed', err);
       }
     }
   }
 
-  // 2. Попытка использовать MAX Bridge downloadFile (если доступен в среде)
-  if (typeof window !== 'undefined' && (window as any).WebApp?.downloadFile) {
-    try {
-      const url = URL.createObjectURL(blob);
-      await (window as any).WebApp.downloadFile(url, filename);
-      URL.revokeObjectURL(url);
-      return;
-    } catch (err) {
-      console.log('WebApp.downloadFile failed', err);
-    }
+  // 2. Для PDF и других файлов — открываем в новой вкладке через Blob URL
+  // Это самый надежный способ на мобильных устройствах
+  try {
+    const blobUrl = URL.createObjectURL(blob);
+    
+    // Создаем временную ссылку и кликаем по ней
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Освобождаем URL через небольшую задержку (чтобы браузер успел обработать)
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    
+    return true;
+  } catch (err) {
+    console.error('File open failed:', err);
+    return false;
   }
-
-  // 3. Фоллбэк на стандартный <a> download (работает в обычных десктопных браузерах)
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 };
 
 export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
@@ -208,11 +210,13 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [batchCount, setBatchCount] = useState(1);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [exportError, setExportError] = useState('');
+  const [exportSuccess, setExportSuccess] = useState('');
 
   const handleGenerate = async (count: number) => {
     if (!wordsInput.trim()) return;
     setIsGenerating(true);
     setExportError('');
+    setExportSuccess('');
     triggerHaptic('medium');
     
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -226,6 +230,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const downloadAsImage = async (result: WordSearchResult, index: number) => {
     triggerHaptic('light');
     setExportError('');
+    setExportSuccess('');
     const canvas = generateCanvas(result, showAnswers, showWordList, index + 1, false);
     
     canvas.toBlob(async (blob) => {
@@ -233,7 +238,12 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         setExportError('Не удалось создать изображение');
         return;
       }
-      await handleMobileExport(blob, `филворд_вариант_${index + 1}.png`, 'image/png');
+      const success = await openOrShareFile(blob, `филворд_вариант_${index + 1}.png`, 'image/png');
+      if (success) {
+        setExportSuccess('Изображение готово к сохранению');
+      } else {
+        setExportError('Не удалось сохранить изображение');
+      }
     }, 'image/png');
   };
 
@@ -241,6 +251,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     if (results.length === 0) return;
     setIsExportingPDF(true);
     setExportError('');
+    setExportSuccess('');
     triggerHaptic('medium');
     
     try {
@@ -261,9 +272,17 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
       }
       
-      // Получаем Blob вместо прямого скачивания
+      // Получаем PDF как Blob
       const pdfBlob = doc.output('blob');
-      await handleMobileExport(pdfBlob, 'филворды.pdf', 'application/pdf');
+      const filename = `филворды_${results.length}шт.pdf`;
+      
+      const success = await openOrShareFile(pdfBlob, filename, 'application/pdf');
+      
+      if (success) {
+        setExportSuccess('PDF готов! Если файл не скачался автоматически — проверьте загрузки браузера');
+      } else {
+        setExportError('Не удалось открыть PDF. Попробуйте еще раз.');
+      }
       
     } catch (err) {
       console.error('PDF generation error:', err);
@@ -383,6 +402,13 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
           <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
             <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
             <p className="text-xs text-red-700">{exportError}</p>
+          </div>
+        )}
+
+        {exportSuccess && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-start gap-2">
+            <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-green-700">{exportSuccess}</p>
           </div>
         )}
 
