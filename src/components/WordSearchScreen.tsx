@@ -157,30 +157,49 @@ const generateCanvas = (
   return canvas;
 };
 
-// Функция для скачивания файла через MAX Bridge
+// Функция для скачивания файла через MAX Bridge (с фоллбэком)
 const downloadFileViaMax = async (blob: Blob, filename: string): Promise<boolean> => {
   // Проверяем наличие MAX Bridge
-  if (typeof window !== 'undefined' && (window as any).WebApp?.downloadFile) {
+  const webApp = (window as any).WebApp;
+  
+  if (webApp && typeof webApp.downloadFile === 'function') {
     try {
-      const url = URL.createObjectURL(blob);
-      await (window as any).WebApp.downloadFile(url, filename);
-      URL.revokeObjectURL(url);
+      // Создаем Blob URL — именно его требует downloadFile
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Вызываем нативный метод MAX Bridge
+      await webApp.downloadFile(blobUrl, filename);
+      
+      // Освобождаем URL с задержкой (чтобы MAX успел скачать)
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      
       return true;
     } catch (err) {
-      console.error('MAX downloadFile failed:', err);
-      return false;
+      console.error('MAX Bridge downloadFile failed:', err);
     }
   }
-  return false;
+  
+  // Фоллбэк: стандартное скачивание через <a>
+  try {
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    return true;
+  } catch (err) {
+    console.error('Fallback download failed:', err);
+    return false;
+  }
 };
 
-// Функция для скачивания/шаринга PNG
-const shareOrDownloadPNG = async (blob: Blob, filename: string): Promise<boolean> => {
-  // 1. Попытка использовать MAX Bridge
-  const maxSuccess = await downloadFileViaMax(blob, filename);
-  if (maxSuccess) return true;
-
-  // 2. Попытка использовать нативный "Поделиться"
+// Функция для PNG (используем navigator.share, так как он работает)
+const shareImage = async (blob: Blob, filename: string): Promise<boolean> => {
   if (navigator.share && navigator.canShare) {
     const file = new File([blob], filename, { type: 'image/png' });
     if (navigator.canShare({ files: [file] })) {
@@ -195,17 +214,9 @@ const shareOrDownloadPNG = async (blob: Blob, filename: string): Promise<boolean
       }
     }
   }
-
-  // 3. Фоллбэк на стандартный download
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  return true;
+  
+  // Фоллбэк на MAX Bridge
+  return downloadFileViaMax(blob, filename);
 };
 
 export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
@@ -246,9 +257,9 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         setExportError('Не удалось создать изображение');
         return;
       }
-      const success = await shareOrDownloadPNG(blob, `филворд_вариант_${index + 1}.png`);
+      const success = await shareImage(blob, `филворд_вариант_${index + 1}.png`);
       if (success) {
-        setExportSuccess('Изображение сохранено');
+        setExportSuccess('Изображение готово к сохранению');
       } else {
         setExportError('Не удалось сохранить изображение');
       }
@@ -284,13 +295,13 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       const pdfBlob = doc.output('blob');
       const filename = `филворды_${results.length}шт.pdf`;
       
-      // Используем MAX Bridge для скачивания
+      // Используем MAX Bridge downloadFile
       const success = await downloadFileViaMax(pdfBlob, filename);
       
       if (success) {
-        setExportSuccess('PDF скачан через MAX');
+        setExportSuccess('PDF сохранен! Проверьте загрузки устройства');
       } else {
-        setExportError('Не удалось скачать PDF. Убедитесь, что приложение открыто в MAX.');
+        setExportError('Не удалось сохранить PDF. Попробуйте еще раз.');
       }
       
     } catch (err) {
