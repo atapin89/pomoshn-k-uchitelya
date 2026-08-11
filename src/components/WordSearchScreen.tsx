@@ -96,7 +96,7 @@ const generateCanvas = (
         else if (dr === 1 && dc === 1) arrow = '↘';
         else if (dr === 1 && dc === -1) arrow = '↙';
         else if (dr === -1 && dc === 1) arrow = '↗';
-        else if (dr === -1 && dc === -1) arrow = '';
+        else if (dr === -1 && dc === -1) arrow = '↖';
 
         if (arrow) {
           const x = startX + last.col * (cellSize + gap);
@@ -194,11 +194,11 @@ const shareImage = async (canvas: HTMLCanvasElement, filename: string): Promise<
 
 // Компонент просмотра PDF
 const PDFViewerScreen = ({ 
-  pdfDataUrl, 
+  pdfBlobUrl, 
   filename, 
   onBack 
 }: { 
-  pdfDataUrl: string; 
+  pdfBlobUrl: string; 
   filename: string; 
   onBack: () => void;
 }) => {
@@ -206,7 +206,7 @@ const PDFViewerScreen = ({
 
   const handleDownload = () => {
     const link = document.createElement('a');
-    link.href = pdfDataUrl;
+    link.href = pdfBlobUrl;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
@@ -223,7 +223,7 @@ const PDFViewerScreen = ({
     }
 
     try {
-      const response = await fetch(pdfDataUrl);
+      const response = await fetch(pdfBlobUrl);
       const blob = await response.blob();
       const file = new File([blob], filename, { type: 'application/pdf' });
       
@@ -294,7 +294,7 @@ const PDFViewerScreen = ({
       <div className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200" style={{ height: 'calc(100dvh - 220px)' }}>
           <iframe
-            src={pdfDataUrl}
+            src={pdfBlobUrl}
             title="Филворды PDF"
             className="w-full h-full border-0"
           />
@@ -321,7 +321,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [exportSuccess, setExportSuccess] = useState('');
   
   // Состояние для просмотра PDF
-  const [pdfView, setPdfView] = useState<{ dataUrl: string; filename: string } | null>(null);
+  const [pdfView, setPdfView] = useState<{ blobUrl: string; filename: string } | null>(null);
 
   const handleGenerate = async (count: number) => {
     if (!wordsInput.trim()) return;
@@ -388,11 +388,12 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
       }
       
-      // Получаем PDF как data URL и переходим на экран просмотра
-      const dataUrl = doc.output('datauristring');
+      // Получаем PDF как Blob и создаем Blob URL
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
       const filename = `филворды_${results.length}шт.pdf`;
       
-      setPdfView({ dataUrl, filename });
+      setPdfView({ blobUrl, filename });
       
     } catch (err) {
       console.error('PDF generation error:', err);
@@ -413,9 +414,12 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   if (pdfView) {
     return (
       <PDFViewerScreen
-        pdfDataUrl={pdfView.dataUrl}
+        pdfBlobUrl={pdfView.blobUrl}
         filename={pdfView.filename}
-        onBack={() => setPdfView(null)}
+        onBack={() => {
+          URL.revokeObjectURL(pdfView.blobUrl);
+          setPdfView(null);
+        }}
       />
     );
   }
