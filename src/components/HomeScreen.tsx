@@ -47,10 +47,9 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
 
   return (
     <div className="min-h-[100dvh] notebook-bg flex flex-col">
-      <header className="max-w-md mx-auto w-full px-5 pt-12 pb-6 text-center">
-        <h1 className="text-4xl font-extrabold text-purple-700">Помощник учителя</h1>
-        <p className="text-gray-500 mt-2">Простые инструменты на каждый день</p>
-        <p className="text-right mt-3 text-sm text-gray-500">
+      <header className="max-w-md mx-auto w-full px-5 pt-10 pb-6 text-center">
+        {/* Ссылка на автора теперь НАД заголовком, выровнена по правому краю */}
+        <p className="text-right text-sm text-gray-500 mb-4">
           Проект{' '}
           <a 
             href="https://vk.ru/aaatapin" 
@@ -61,6 +60,9 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
             Алексея Атапина
           </a>
         </p>
+        
+        <h1 className="text-4xl font-extrabold text-purple-700">Помощник учителя</h1>
+        <p className="text-gray-500 mt-2">Простые инструменты на каждый день</p>
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
