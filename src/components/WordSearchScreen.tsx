@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RefreshCw, Check, AlertTriangle, Grid3x3, FileText, Download, Share2, ArrowLeft } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Grid3x3, FileText, Download, Share2 } from 'lucide-react';
 import { generateBatch } from '@/lib/wordSearchGenerator';
 import type { WordSearchResult, WordSearchConfig } from '@/types';
 import { triggerHaptic } from '@/lib/haptic';
@@ -93,7 +93,7 @@ const generateCanvas = (
         else if (dr === 0 && dc === -1) arrow = '←';
         else if (dr === 1 && dc === 0) arrow = '↓';
         else if (dr === -1 && dc === 0) arrow = '↑';
-        else if (dr === 1 && dc === 1) arrow = '↘';
+        else if (dr === 1 && dc === 1) arrow = '';
         else if (dr === 1 && dc === -1) arrow = '↙';
         else if (dr === -1 && dc === 1) arrow = '↗';
         else if (dr === -1 && dc === -1) arrow = '↖';
@@ -157,7 +157,7 @@ const generateCanvas = (
   return canvas;
 };
 
-// Скачивание PNG через <a> (работает на всех устройствах)
+// Скачивание PNG через <a>
 const downloadImage = (canvas: HTMLCanvasElement, filename: string) => {
   const dataUrl = canvas.toDataURL('image/png');
   const link = document.createElement('a');
@@ -192,122 +192,6 @@ const shareImage = async (canvas: HTMLCanvasElement, filename: string): Promise<
   }
 };
 
-// Компонент просмотра PDF
-const PDFViewerScreen = ({ 
-  pdfBlobUrl, 
-  filename, 
-  onBack 
-}: { 
-  pdfBlobUrl: string; 
-  filename: string; 
-  onBack: () => void;
-}) => {
-  const [actionMessage, setActionMessage] = useState('');
-
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = pdfBlobUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setActionMessage('Файл сохранен');
-    triggerHaptic('light');
-    setTimeout(() => setActionMessage(''), 2000);
-  };
-
-  const handleShare = async () => {
-    if (!navigator.share || !navigator.canShare) {
-      handleDownload();
-      return;
-    }
-
-    try {
-      const response = await fetch(pdfBlobUrl);
-      const blob = await response.blob();
-      const file = new File([blob], filename, { type: 'application/pdf' });
-      
-      if (navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: 'Филворды',
-        });
-        setActionMessage('Файл отправлен');
-        triggerHaptic('light');
-        setTimeout(() => setActionMessage(''), 2000);
-      } else {
-        handleDownload();
-      }
-    } catch (err) {
-      console.log('Share failed', err);
-    }
-  };
-
-  return (
-    <div className="min-h-[100dvh] bg-gray-50 flex flex-col">
-      {/* Шапка с кнопками действий */}
-      <header className="bg-purple-700 shadow-md sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-5 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={onBack}
-              className="flex items-center gap-2 text-white font-semibold"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              Назад
-            </button>
-            <h1 className="text-lg font-bold text-white">PDF</h1>
-            <div className="w-20" /> {/* Для центрирования заголовка */}
-          </div>
-        </div>
-      </header>
-
-      {/* Кнопки действий */}
-      <div className="max-w-md mx-auto w-full px-5 py-3">
-        <div className="flex gap-2">
-          <button
-            onClick={handleDownload}
-            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-md"
-          >
-            <Download className="w-5 h-5" />
-            Скачать
-          </button>
-          <button
-            onClick={handleShare}
-            className="flex-1 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-md"
-          >
-            <Share2 className="w-5 h-5" />
-            Отправить
-          </button>
-        </div>
-        {actionMessage && (
-          <div className="mt-2 bg-green-50 border border-green-200 rounded-lg p-2 text-center">
-            <p className="text-sm text-green-700">{actionMessage}</p>
-          </div>
-        )}
-        <p className="text-xs text-gray-500 text-center mt-2">
-          💡 Для сохранения: нажмите "Скачать" или используйте меню браузера (⋮)
-        </p>
-      </div>
-
-      {/* Просмотр PDF */}
-      <div className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200" style={{ height: 'calc(100dvh - 220px)' }}>
-          <iframe
-            src={pdfBlobUrl}
-            title="Филворды PDF"
-            className="w-full h-full border-0"
-          />
-        </div>
-      </div>
-
-      <div className="mb-4">
-        <YandexAdBlock />
-      </div>
-    </div>
-  );
-};
-
 export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [wordsInput, setWordsInput] = useState('МАТЕМАТИКА\nУЧИТЕЛЬ\nШКОЛА\nУРОК\nЗНАНИЯ');
   const [config, setConfig] = useState<WordSearchConfig>({ gridSize: 10, difficulty: 'medium' });
@@ -319,9 +203,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [exportError, setExportError] = useState('');
   const [exportSuccess, setExportSuccess] = useState('');
-  
-  // Состояние для просмотра PDF
-  const [pdfView, setPdfView] = useState<{ blobUrl: string; filename: string } | null>(null);
 
   const handleGenerate = async (count: number) => {
     if (!wordsInput.trim()) return;
@@ -388,12 +269,9 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
       }
       
-      // Получаем PDF как Blob и создаем Blob URL
-      const pdfBlob = doc.output('blob');
-      const blobUrl = URL.createObjectURL(pdfBlob);
-      const filename = `филворды_${results.length}шт.pdf`;
-      
-      setPdfView({ blobUrl, filename });
+      // Прямое скачивание через doc.save()
+      doc.save(`филворды_${results.length}шт.pdf`);
+      setExportSuccess('PDF скачан! Проверьте загрузки устройства');
       
     } catch (err) {
       console.error('PDF generation error:', err);
@@ -409,20 +287,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     if (size === 15) return { width: 'min(100%, 360px)', fontSize: 'text-xs sm:text-sm', cellSize: '24px' };
     return { width: 'min(100%, 320px)', fontSize: 'text-sm sm:text-base', cellSize: '32px' };
   };
-
-  // Если открыт просмотр PDF — показываем отдельный экран
-  if (pdfView) {
-    return (
-      <PDFViewerScreen
-        pdfBlobUrl={pdfView.blobUrl}
-        filename={pdfView.filename}
-        onBack={() => {
-          URL.revokeObjectURL(pdfView.blobUrl);
-          setPdfView(null);
-        }}
-      />
-    );
-  }
 
   return (
     <div className="min-h-[100dvh] notebook-bg flex flex-col">
@@ -538,26 +402,44 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         )}
 
         {results.length > 0 && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => { setShowAnswers(!showAnswers); triggerHaptic('light'); }}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-                showAnswers ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-white text-gray-600 border border-gray-200'
-              }`}
-            >
-              <Check className="w-4 h-4" />
-              {showAnswers ? 'Скрыть ответы' : 'Показать ответы'}
-            </button>
+          <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+            <p className="text-sm font-semibold text-purple-700">Настройки отображения:</p>
             
-            <button
-              onClick={() => { setShowWordList(!showWordList); triggerHaptic('light'); }}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-                showWordList ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-white text-gray-600 border border-gray-200'
-              }`}
-            >
-              <Grid3x3 className="w-4 h-4" />
-              {showWordList ? 'Скрыть слова' : 'Показать слова'}
-            </button>
+            {/* Toggle: Показать ответы */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">Показать ответы на сетке</span>
+              <button
+                onClick={() => { setShowAnswers(!showAnswers); triggerHaptic('light'); }}
+                className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
+                  showAnswers ? 'bg-purple-600' : 'bg-gray-300'
+                }`}
+                aria-label="Переключить ответы"
+              >
+                <span
+                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                    showAnswers ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Toggle: Показать список слов */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">Показать список слов</span>
+              <button
+                onClick={() => { setShowWordList(!showWordList); triggerHaptic('light'); }}
+                className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
+                  showWordList ? 'bg-purple-600' : 'bg-gray-300'
+                }`}
+                aria-label="Переключить список слов"
+              >
+                <span
+                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                    showWordList ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
           </div>
         )}
 
@@ -578,7 +460,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                     </button>
                     <button
                       onClick={() => handleShareImage(result, index)}
-                      className="flex items-center gap-1.5 text-sm font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 px-3 py-2 rounded-lg transition-colors"
+                      className="flex items-center gap-1.5 text-sm font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-lg transition-colors"
                     >
                       <Share2 className="w-4 h-4" /> Отправить
                     </button>
