@@ -184,13 +184,12 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     }
     
     // 2. Создаем Canvas для страницы ответов (чтобы поддержать кириллицу)
-    const itemsPerPage = 4; // ИЗМЕНЕНО: 4 вместо 6
+    const itemsPerPage = 4;
     const totalPagesForAnswers = Math.ceil(results.length / itemsPerPage);
     
     for (let p = 0; p < totalPagesForAnswers; p++) {
       doc.addPage();
       
-      // Создаем canvas для всей страницы ответов
       const answerCanvas = document.createElement('canvas');
       const scale = 2;
       answerCanvas.width = pageWidth * scale;
@@ -203,22 +202,21 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, pageWidth, pageHeight);
       
-      // Заголовок
+      // Заголовок (СДВИНУТ ВЫШЕ и выровнен по верху)
       ctx.fillStyle = '#783296';
-      ctx.font = 'bold 20px Arial, sans-serif';
+      ctx.font = 'bold 18px Arial, sans-serif';
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('ОТВЕТЫ ДЛЯ ПЕДАГОГА', pageWidth / 2, 20);
+      ctx.textBaseline = 'top'; // ИЗМЕНЕНО: top вместо middle
+      ctx.fillText('ОТВЕТЫ ДЛЯ ПЕДАГОГА', pageWidth / 2, 10); // ИЗМЕНЕНО: 10 вместо 20
       
-      // Список слов
+      // Список слов (СДВИНУТ ВЫШЕ)
       const wordListString = results[0].placedWords.map(pw => pw.word).join(', ');
       ctx.fillStyle = '#646464';
-      ctx.font = '12px Arial, sans-serif';
+      ctx.font = '11px Arial, sans-serif';
       
-      // Разбиваем на строки если текст длинный
       const wordsLines = wordListString.split(', ');
       let currentLine = 'Зашифрованные слова: ';
-      let yPos = 32;
+      let yPos = 22; // ИЗМЕНЕНО: 22 вместо 32
       
       wordsLines.forEach((word, idx) => {
         const testLine = currentLine + word + (idx < wordsLines.length - 1 ? ', ' : '');
@@ -227,7 +225,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         if (metrics.width > usableWidth && currentLine !== 'Зашифрованные слова: ') {
           ctx.fillText(currentLine, pageWidth / 2, yPos);
           currentLine = word + ', ';
-          yPos += 15;
+          yPos += 13; // ИЗМЕНЕНО: 13 вместо 15
         } else {
           currentLine = testLine;
         }
@@ -237,11 +235,11 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         ctx.fillText(currentLine, pageWidth / 2, yPos);
       }
       
-      // Рисуем 4 миниатюры на странице (сетка 2×2)
+      // Миниатюры (СДВИНУТЫ ВЫШЕ, отступы уменьшены)
       const cols = 2;
-      const rows = 2; // ИЗМЕНЕНО: 2 вместо 3
-      const gap = 15; // ИЗМЕНЕНО: увеличен отступ для лучшего вида
-      const headerHeight = 60; // ИЗМЕНЕНО: больше места для заголовка
+      const rows = 2;
+      const gap = 12; // ИЗМЕНЕНО: 12 вместо 15
+      const headerHeight = 45; // ИЗМЕНЕНО: 45 вместо 60 (освобождаем место для миниатюр)
       const colWidth = (usableWidth - gap) / cols;
       const rowHeight = (pageHeight - margin * 2 - headerHeight - (rows - 1) * gap) / rows;
       const startY = margin + headerHeight;
