@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, RefreshCw, Check, AlertTriangle, Grid3x3, FileText, Share2 } from 'lucide-react';
+import { RefreshCw, Check, AlertTriangle, Grid3x3, FileText, Download, Share2 } from 'lucide-react';
 import { generateBatch } from '@/lib/wordSearchGenerator';
 import type { WordSearchResult, WordSearchConfig } from '@/types';
 import { triggerHaptic } from '@/lib/haptic';
@@ -157,66 +157,67 @@ const generateCanvas = (
   return canvas;
 };
 
-// Функция для скачивания файла через MAX Bridge (с фоллбэком)
-const downloadFileViaMax = async (blob: Blob, filename: string): Promise<boolean> => {
-  // Проверяем наличие MAX Bridge
-  const webApp = (window as any).WebApp;
+// Скачивание PNG через <a> (работает на всех устройствах)
+const downloadImage = (canvas: HTMLCanvasElement, filename: string) => {
+  const dataUrl = canvas.toDataURL('image/png');
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+// Поделиться PNG через системное меню (только на мобильных)
+const shareImage = async (canvas: HTMLCanvasElement, filename: string): Promise<boolean> => {
+  if (!navigator.share || !navigator.canShare) return false;
   
-  if (webApp && typeof webApp.downloadFile === 'function') {
-    try {
-      // Создаем Blob URL — именно его требует downloadFile
-      const blobUrl = URL.createObjectURL(blob);
-      
-      // Вызываем нативный метод MAX Bridge
-      await webApp.downloadFile(blobUrl, filename);
-      
-      // Освобождаем URL с задержкой (чтобы MAX успел скачать)
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-      
-      return true;
-    } catch (err) {
-      console.error('MAX Bridge downloadFile failed:', err);
-    }
-  }
-  
-  // Фоллбэк: стандартное скачивание через <a>
   try {
-    const blobUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = filename;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    const blob = await new Promise<Blob | null>(resolve => 
+      canvas.toBlob(resolve, 'image/png')
+    );
+    if (!blob) return false;
+    
+    const file = new File([blob], filename, { type: 'image/png' });
+    if (!navigator.canShare({ files: [file] })) return false;
+    
+    await navigator.share({
+      files: [file],
+      title: 'Филворд',
+    });
     return true;
   } catch (err) {
-    console.error('Fallback download failed:', err);
+    console.log('Share canceled or failed', err);
     return false;
   }
 };
 
-// Функция для PNG (используем navigator.share, так как он работает)
-const shareImage = async (blob: Blob, filename: string): Promise<boolean> => {
-  if (navigator.share && navigator.canShare) {
-    const file = new File([blob], filename, { type: 'image/png' });
-    if (navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: 'Филворд',
-        });
-        return true;
-      } catch (err) {
-        console.log('Share canceled or failed', err);
-      }
-    }
+// Открытие PDF в новой вкладке (самый надежный способ на всех устройствах)
+const openPDF = (doc: jsPDF) => {
+  const dataUrl = doc.output('datauristring');
+  const newWindow = window.open();
+  if (newWindow) {
+    newWindow.document.write(`
+      <html>
+        <head>
+          <title>Филворды</title>
+          <style>
+            body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f3f4f6; }
+            iframe { width: 100%; height: 100vh; border: none; }
+            .hint { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 20px; border-radius: 8px; font-family: sans-serif; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <iframe src="${dataUrl}"></iframe>
+          <div class="hint">💡 Нажмите на иконку скачивания в правом верхнем углу браузера, чтобы сохранить PDF</div>
+        </body>
+      </html>
+    `);
+    newWindow.document.close();
+  } else {
+    // Если popup заблокирован — используем стандартное скачивание
+    doc.save('филворды.pdf');
   }
-  
-  // Фоллбэк на MAX Bridge
-  return downloadFileViaMax(blob, filename);
 };
 
 export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
@@ -246,24 +247,28 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     setIsGenerating(false);
   };
 
-  const downloadAsImage = async (result: WordSearchResult, index: number) => {
+  const handleDownloadImage = (result: WordSearchResult, index: number) => {
     triggerHaptic('light');
     setExportError('');
     setExportSuccess('');
     const canvas = generateCanvas(result, showAnswers, showWordList, index + 1, false);
-    
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        setExportError('Не удалось создать изображение');
-        return;
-      }
-      const success = await shareImage(blob, `филворд_вариант_${index + 1}.png`);
-      if (success) {
-        setExportSuccess('Изображение готово к сохранению');
-      } else {
-        setExportError('Не удалось сохранить изображение');
-      }
-    }, 'image/png');
+    downloadImage(canvas, `филворд_вариант_${index + 1}.png`);
+    setExportSuccess('Изображение скачано');
+  };
+
+  const handleShareImage = async (result: WordSearchResult, index: number) => {
+    triggerHaptic('light');
+    setExportError('');
+    setExportSuccess('');
+    const canvas = generateCanvas(result, showAnswers, showWordList, index + 1, false);
+    const success = await shareImage(canvas, `филворд_вариант_${index + 1}.png`);
+    if (success) {
+      setExportSuccess('Изображение отправлено');
+    } else {
+      // Фоллбэк на скачивание
+      downloadImage(canvas, `филворд_вариант_${index + 1}.png`);
+      setExportSuccess('Изображение скачано (отправка недоступна)');
+    }
   };
 
   const downloadAsPDF = async () => {
@@ -291,18 +296,9 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
       }
       
-      // Получаем PDF как Blob
-      const pdfBlob = doc.output('blob');
-      const filename = `филворды_${results.length}шт.pdf`;
-      
-      // Используем MAX Bridge downloadFile
-      const success = await downloadFileViaMax(pdfBlob, filename);
-      
-      if (success) {
-        setExportSuccess('PDF сохранен! Проверьте загрузки устройства');
-      } else {
-        setExportError('Не удалось сохранить PDF. Попробуйте еще раз.');
-      }
+      // Открываем PDF в новой вкладке — это работает на всех устройствах
+      openPDF(doc);
+      setExportSuccess('PDF открыт в новой вкладке. Сохраните его через меню браузера');
       
     } catch (err) {
       console.error('PDF generation error:', err);
@@ -464,12 +460,20 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
               <div key={result.id} className="bg-white rounded-2xl shadow-md p-4 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-purple-700">Вариант #{index + 1}</h3>
-                  <button
-                    onClick={() => downloadAsImage(result, index)}
-                    className="flex items-center gap-1.5 text-sm font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-lg transition-colors"
-                  >
-                    <Share2 className="w-4 h-4" /> Сохранить PNG
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDownloadImage(result, index)}
+                      className="flex items-center gap-1.5 text-sm font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-lg transition-colors"
+                    >
+                      <Download className="w-4 h-4" /> Скачать
+                    </button>
+                    <button
+                      onClick={() => handleShareImage(result, index)}
+                      className="flex items-center gap-1.5 text-sm font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 px-3 py-2 rounded-lg transition-colors"
+                    >
+                      <Share2 className="w-4 h-4" /> Отправить
+                    </button>
+                  </div>
                 </div>
 
                 {result.failedWords.length > 0 && (
