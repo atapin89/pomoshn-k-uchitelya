@@ -22,7 +22,7 @@ const COLORS = [
   '#c084fc', '#d8b4fe', '#6d28d9', '#e9d5ff',
 ];
 
-const EMOJIS = ['😊', '😮', '', '😴', '🤔', '😲', '🙄', '😬'];
+const EMOJIS = ['😊', '😮', '😡', '😴', '🤔', '😲', '', '😬'];
 
 function createBalls(count: number, width: number, height: number): Ball[] {
   const balls: Ball[] = [];
@@ -113,72 +113,87 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
     setActive(false);
   }, []);
 
+  // НАДЁЖНАЯ функция воспроизведения звука
   const playSound = (ctx: AudioContext, type: SoundType, volumePercent: number) => {
     if (type === 'none') return;
-    
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-    }
-    
-    const now = ctx.currentTime;
-    const gainValue = Math.max(0.15, (volumePercent / 100) * 0.8);
+    if (!ctx || ctx.state === 'closed') return;
 
-    if (type === 'beep') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
-      gain.gain.setValueAtTime(gainValue, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.2);
-    } else if (type === 'shush') {
-      const bufferSize = ctx.sampleRate * 0.4;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
-      }
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'highpass';
-      filter.frequency.value = 4000;
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(gainValue, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      noise.start(now);
-      noise.stop(now + 0.4);
-    } else if (type === 'bell') {
-      const freqs = [523, 659, 784];
-      freqs.forEach((f, i) => {
+    // Разблокируем контекст
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
+    const now = ctx.currentTime;
+    const gainValue = Math.max(0.2, (volumePercent / 100) * 0.8);
+
+    try {
+      if (type === 'beep') {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(f, now + i * 0.08);
-        gain.gain.setValueAtTime(gainValue, now + i * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.4);
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
+        gain.gain.setValueAtTime(gainValue, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
         osc.connect(gain);
         gain.connect(ctx.destination);
-        osc.start(now + i * 0.08);
-        osc.stop(now + i * 0.08 + 0.4);
-      });
+        osc.start(now);
+        osc.stop(Math.max(now + 0.25, ctx.currentTime + 0.01));
+      } else if (type === 'shush') {
+        const bufferSize = Math.floor(ctx.sampleRate * 0.4);
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 4000;
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(gainValue, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start(now);
+        noise.stop(Math.max(now + 0.45, ctx.currentTime + 0.01));
+      } else if (type === 'bell') {
+        const freqs = [523, 659, 784];
+        freqs.forEach((f, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          const startTime = now + i * 0.08;
+          osc.frequency.setValueAtTime(f, startTime);
+          gain.gain.setValueAtTime(gainValue, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime);
+          osc.stop(Math.max(startTime + 0.45, ctx.currentTime + 0.01));
+        });
+      }
+    } catch (e) {
+      console.warn('Sound play error:', e);
     }
   };
 
-  const testSound = () => {
-    if (audioContextRef.current) {
-      playSound(audioContextRef.current, soundType, soundVolume);
-      triggerHaptic('light');
-    } else {
+  const testSound = async () => {
+    const ctx = audioContextRef.current;
+    if (!ctx) {
       setError('Сначала включите микрофон, чтобы активировать аудиосистему.');
+      return;
     }
+    
+    // Принудительно разблокируем контекст
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
+    
+    playSound(ctx, soundType, soundVolume);
+    triggerHaptic('light');
   };
 
   const startMic = async () => {
@@ -261,6 +276,10 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
           loudSinceRef.current = Date.now();
         } else if (Date.now() - loudSinceRef.current > 2000) {
           if (Date.now() - lastBeepRef.current > 3000) {
+            // Разблокируем контекст перед воспроизведением
+            if (audioCtx.state === 'suspended') {
+              audioCtx.resume().catch(() => {});
+            }
             playSound(audioCtx, soundTypeRef.current, soundVolumeRef.current);
             lastBeepRef.current = Date.now();
           }
@@ -529,9 +548,9 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
                     />
                   </div>
 
-                  {/* Блок звукового сигнала */}
-                  <div className="flex items-center justify-between w-full min-h-12">
-                    <div className="flex items-center gap-2 flex-1 overflow-hidden">
+                  {/* Блок звукового сигнала — ИСПРАВЛЕНА ВЕРСТКА */}
+                  <div className="flex items-center justify-between w-full min-h-12 gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
                       <span className="text-sm font-medium text-gray-700 shrink-0">Звуковой сигнал</span>
                       {soundAlert && (
                         <select
@@ -542,7 +561,7 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
                             localStorage.setItem('noiseMonitorSoundType', val);
                             triggerHaptic('light');
                           }}
-                          className="flex-1 min-w-0 rounded-xl border border-purple-200 p-2 bg-white text-sm text-gray-800 appearance-none pr-6 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
+                          className="w-[120px] rounded-xl border border-purple-200 p-2 bg-white text-sm text-gray-800 appearance-none pr-6 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400 shrink-0"
                         >
                           {soundOptions.map((opt) => (
                             <option key={opt.id} value={opt.id}>
