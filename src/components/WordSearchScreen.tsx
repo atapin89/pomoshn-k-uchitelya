@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RefreshCw, AlertTriangle, Grid3x3, FileText, Download, Share2 } from 'lucide-react';
+import { RefreshCw, Check, AlertTriangle, Grid3x3, FileText, Download, Share2 } from 'lucide-react';
 import { generateBatch } from '@/lib/wordSearchGenerator';
 import type { WordSearchResult, WordSearchConfig } from '@/types';
 import { triggerHaptic } from '@/lib/haptic';
@@ -93,7 +93,7 @@ const generateCanvas = (
         else if (dr === 0 && dc === -1) arrow = '←';
         else if (dr === 1 && dc === 0) arrow = '↓';
         else if (dr === -1 && dc === 0) arrow = '↑';
-        else if (dr === 1 && dc === 1) arrow = '';
+        else if (dr === 1 && dc === 1) arrow = '↘';
         else if (dr === 1 && dc === -1) arrow = '↙';
         else if (dr === -1 && dc === 1) arrow = '↗';
         else if (dr === -1 && dc === -1) arrow = '↖';
@@ -384,6 +384,11 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
                 <span>{isExportingPDF ? '...' : 'PDF'}</span>
               </button>
             </div>
+            
+            {/* Уведомление о скачивании PDF только на компьютере */}
+            <p className="text-xs text-gray-500 text-center">
+              💡 PDF можно скачать только на компьютере. На телефоне используйте "Скачать PNG" или "Отправить"
+            </p>
           </div>
         </section>
 
@@ -401,44 +406,45 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
           </div>
         )}
 
+        {/* Toggle-переключатели на одной строке */}
         {results.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
-            <p className="text-sm font-semibold text-purple-700">Настройки отображения:</p>
-            
-            {/* Toggle: Показать ответы */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Показать ответы на сетке</span>
-              <button
-                onClick={() => { setShowAnswers(!showAnswers); triggerHaptic('light'); }}
-                className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
-                  showAnswers ? 'bg-purple-600' : 'bg-gray-300'
-                }`}
-                aria-label="Переключить ответы"
-              >
-                <span
-                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
-                    showAnswers ? 'translate-x-5' : 'translate-x-0'
+          <div className="bg-white rounded-2xl shadow-sm p-4">
+            <div className="flex items-center justify-between gap-3">
+              {/* Toggle: Ответы */}
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <span className="text-sm font-medium text-gray-700 truncate">Ответы</span>
+                <button
+                  onClick={() => { setShowAnswers(!showAnswers); triggerHaptic('light'); }}
+                  className={`relative shrink-0 w-12 h-7 rounded-full transition-colors duration-200 ${
+                    showAnswers ? 'bg-purple-600' : 'bg-gray-300'
                   }`}
-                />
-              </button>
-            </div>
+                  aria-label="Переключить ответы"
+                >
+                  <span
+                    className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                      showAnswers ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
 
-            {/* Toggle: Показать список слов */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Показать список слов</span>
-              <button
-                onClick={() => { setShowWordList(!showWordList); triggerHaptic('light'); }}
-                className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
-                  showWordList ? 'bg-purple-600' : 'bg-gray-300'
-                }`}
-                aria-label="Переключить список слов"
-              >
-                <span
-                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
-                    showWordList ? 'translate-x-5' : 'translate-x-0'
+              {/* Toggle: Список слов */}
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <span className="text-sm font-medium text-gray-700 truncate">Слова</span>
+                <button
+                  onClick={() => { setShowWordList(!showWordList); triggerHaptic('light'); }}
+                  className={`relative shrink-0 w-12 h-7 rounded-full transition-colors duration-200 ${
+                    showWordList ? 'bg-purple-600' : 'bg-gray-300'
                   }`}
-                />
-              </button>
+                  aria-label="Переключить список слов"
+                >
+                  <span
+                    className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                      showWordList ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
           </div>
         )}
