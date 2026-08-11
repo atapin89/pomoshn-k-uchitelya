@@ -82,7 +82,7 @@ const generateCanvas = (
     }
   }
   
-  // Рисуем стрелки направления для ответов
+  // Рисуем стрелки направления для ответов (УЛУЧШЕНО)
   if (showAnswers) {
     result.placedWords.forEach(pw => {
       if (pw.cells.length > 1) {
@@ -104,11 +104,13 @@ const generateCanvas = (
         if (arrow) {
           const x = startX + last.col * (cellSize + gap);
           const y = startY + last.row * (cellSize + gap);
-          ctx.fillStyle = '#dc2626'; // Контрастный красный цвет
-          ctx.font = `900 ${isMiniature ? 10 : 16}px Arial, sans-serif`;
+          ctx.fillStyle = '#dc2626'; // Яркий контрастный красный
+          // Увеличенный размер стрелки для отличной видимости
+          const arrowSize = isMiniature ? 16 : 20; 
+          ctx.font = `900 ${arrowSize}px Arial, sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          // Рисуем стрелку в правом верхнем углу последней ячейки слова
+          // Позиция: правый верхний угол последней ячейки слова
           ctx.fillText(arrow, x + cellSize * 0.75, y + cellSize * 0.35);
         }
       }
@@ -217,15 +219,15 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
     }
     
-    // 2. Создаем Canvas для страницы ответов (ТОЛЬКО СЕТКА, без заголовка и списка слов)
-    const itemsPerPage = 25; // 5x5 сетка (25 вариантов на страницу)
+    // 2. Создаем Canvas для страницы ответов (ТОЛЬКО СЕТКА, высокое качество 2x2)
+    const itemsPerPage = 4; // ВОЗВРАЩЕНО: 4 варианта на страницу (2x2) для высокого качества
     const totalPagesForAnswers = Math.ceil(results.length / itemsPerPage);
     
     for (let p = 0; p < totalPagesForAnswers; p++) {
       doc.addPage();
       
       const answerCanvas = document.createElement('canvas');
-      const scale = 2;
+      const scale = 2; // Высокое разрешение
       answerCanvas.width = pageWidth * scale;
       answerCanvas.height = pageHeight * scale;
       
@@ -236,13 +238,13 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, pageWidth, pageHeight);
       
-      // Сетка 5x5 для максимальной компактности
-      const cols = 5;
-      const rows = 5;
-      const gap = 6;
+      // Сетка 2x2 для максимального качества и читаемости стрелок
+      const cols = 2;
+      const rows = 2;
+      const gap = 15; // Комфортный отступ
       
-      const colWidth = (usableWidth - (cols - 1) * gap) / cols;
-      const rowHeight = (usableHeight - (rows - 1) * gap) / rows;
+      const colWidth = (usableWidth - (cols - 1) * gap) / cols; // ~87.5 мм
+      const rowHeight = (usableHeight - (rows - 1) * gap) / rows; // ~131 мм
       const startY = margin;
       
       for (let i = 0; i < itemsPerPage; i++) {
@@ -255,7 +257,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         const x = margin + col * (colWidth + gap);
         const y = startY + row * (rowHeight + gap);
         
-        // Генерируем миниатюру с ответами и стрелками
+        // Генерируем крупную миниатюру с ответами и четкими стрелками
         const miniCanvas = generateCanvas(results[globalIndex], true, false, globalIndex + 1, true);
         const imgW = colWidth;
         const imgH = (miniCanvas.height * imgW) / miniCanvas.width;
@@ -345,6 +347,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
             </button>
           </div>
           
+          {/* ОБЪЕДИНЕННАЯ СТРОКА: Пакетная генерация + Кнопка PDF */}
           <div className="flex items-center gap-3 pt-2 border-t border-purple-100">
              <span className="text-sm text-gray-600 shrink-0">Пакетно:</span>
              <input 
@@ -356,44 +359,41 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
              <button
               onClick={() => handleGenerate(batchCount)}
               disabled={isGenerating || batchCount === 1}
-              className="bg-violet-100 hover:bg-violet-200 text-violet-700 font-semibold rounded-xl px-4 py-2 text-sm active:scale-95 transition-transform disabled:opacity-50"
+              className="bg-violet-100 hover:bg-violet-200 text-violet-700 font-semibold rounded-xl px-4 py-2 text-sm active:scale-95 transition-transform disabled:opacity-50 shrink-0"
             >
               Создать
+            </button>
+            <button
+              onClick={downloadAsPDF}
+              disabled={isExportingPDF || results.length === 0}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl px-4 py-2 text-sm flex items-center gap-1.5 active:scale-95 transition-transform disabled:opacity-50 shrink-0"
+            >
+              <FileText className="w-4 h-4" />
+              {isExportingPDF ? '...' : 'Скачать PDF'}
             </button>
           </div>
         </section>
 
         {results.length > 0 && (
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setShowAnswers(!showAnswers); triggerHaptic('light'); }}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-                  showAnswers ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-white text-gray-600 border border-gray-200'
-                }`}
-              >
-                <Check className="w-4 h-4" />
-                {showAnswers ? 'Скрыть ответы' : 'Показать ответы'}
-              </button>
-              
-              <button
-                onClick={() => { setShowWordList(!showWordList); triggerHaptic('light'); }}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-                  showWordList ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-white text-gray-600 border border-gray-200'
-                }`}
-              >
-                <Grid3x3 className="w-4 h-4" />
-                {showWordList ? 'Скрыть слова' : 'Показать слова'}
-              </button>
-            </div>
-
+          <div className="flex gap-2">
             <button
-              onClick={downloadAsPDF}
-              disabled={isExportingPDF}
-              className="w-full bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50 shadow-md"
+              onClick={() => { setShowAnswers(!showAnswers); triggerHaptic('light'); }}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                showAnswers ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-white text-gray-600 border border-gray-200'
+              }`}
             >
-              <FileText className="w-5 h-5" />
-              {isExportingPDF ? 'Создание PDF...' : `Скачать все (${results.length} шт.) в PDF`}
+              <Check className="w-4 h-4" />
+              {showAnswers ? 'Скрыть ответы' : 'Показать ответы'}
+            </button>
+            
+            <button
+              onClick={() => { setShowWordList(!showWordList); triggerHaptic('light'); }}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                showWordList ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-white text-gray-600 border border-gray-200'
+              }`}
+            >
+              <Grid3x3 className="w-4 h-4" />
+              {showWordList ? 'Скрыть слова' : 'Показать слова'}
             </button>
           </div>
         )}
