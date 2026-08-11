@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Mic, MicOff, Volume2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Mic, MicOff, Volume2, ChevronDown, ChevronUp, Volume } from 'lucide-react';
 import BackButton from './BackButton';
 import YandexAdBlock from './YandexAdBlock';
 import { triggerHaptic } from '@/lib/haptic';
@@ -117,14 +117,14 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
   const playSound = (ctx: AudioContext, type: SoundType, volumePercent: number) => {
     if (type === 'none') return;
     
-    // ВАЖНО: принудительно возобновляем контекст, если браузер его приостановил
+    // КРИТИЧЕСКИ ВАЖНО: разблокируем аудио по любому действию
     if (ctx.state === 'suspended') {
       ctx.resume();
     }
     
     const now = ctx.currentTime;
-    // Увеличена базовая громкость для гарантированной слышимости (от 0.1 до 0.8)
-    const gainValue = Math.max(0.1, (volumePercent / 100) * 0.8);
+    // Увеличена базовая громкость для гарантированной слышимости
+    const gainValue = Math.max(0.15, (volumePercent / 100) * 0.8);
 
     if (type === 'beep') {
       const osc = ctx.createOscillator();
@@ -175,6 +175,16 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
     }
   };
 
+  // Функция для ручной проверки звука (разблокирует AudioContext в браузере)
+  const testSound = () => {
+    if (audioContextRef.current) {
+      playSound(audioContextRef.current, soundType, soundVolume);
+      triggerHaptic('light');
+    } else {
+      setError('Сначала включите микрофон, чтобы активировать аудиосистему.');
+    }
+  };
+
   const startMic = async () => {
     setError('');
     try {
@@ -185,7 +195,7 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
       const ctx = new AudioCtx();
       audioContextRef.current = ctx;
       
-      // КРИТИЧЕСКИ ВАЖНО: разблокируем AudioContext по клику пользователя
+      // Разблокируем AudioContext по клику пользователя
       if (ctx.state === 'suspended') {
         await ctx.resume();
       }
@@ -524,31 +534,10 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
                     />
                   </div>
 
-                  {/* НОВЫЙ БЛОК: Переключатель и выбор мелодии в одну строку */}
-                  <div className="flex items-center justify-between gap-3 min-h-12">
-                    <span className="text-sm font-medium text-gray-700 shrink-0">Звуковой сигнал</span>
-                    <div className="flex items-center gap-3">
-                      {/* Toggle Switch */}
-                      <button
-                        onClick={() => {
-                          const val = !soundAlert;
-                          setSoundAlert(val);
-                          localStorage.setItem('noiseMonitorSoundAlert', String(val));
-                          triggerHaptic('light');
-                        }}
-                        className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
-                          soundAlert ? 'bg-purple-600' : 'bg-gray-300'
-                        }`}
-                        aria-label="Переключить звуковой сигнал"
-                      >
-                        <span
-                          className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
-                            soundAlert ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                      
-                      {/* Select мелодии */}
+                  {/* ИСПРАВЛЕННЫЙ БЛОК: Переключатель зафиксирован справа, выбор появляется между текстом и переключателем */}
+                  <div className="flex items-center justify-between w-full min-h-12">
+                    <div className="flex items-center gap-2 flex-1 overflow-hidden">
+                      <span className="text-sm font-medium text-gray-700 shrink-0">Звуковой сигнал</span>
                       {soundAlert && (
                         <select
                           value={soundType}
@@ -558,7 +547,7 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
                             localStorage.setItem('noiseMonitorSoundType', val);
                             triggerHaptic('light');
                           }}
-                          className="rounded-xl border border-purple-200 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm text-gray-800 appearance-none pr-8 cursor-pointer"
+                          className="flex-1 min-w-0 rounded-xl border border-purple-200 p-2 bg-white text-sm text-gray-800 appearance-none pr-6 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
                         >
                           {soundOptions.map((opt) => (
                             <option key={opt.id} value={opt.id}>
@@ -568,48 +557,32 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
                         </select>
                       )}
                     </div>
+                    
+                    {/* Toggle Switch (всегда справа, не двигается) */}
+                    <button
+                      onClick={() => {
+                        const val = !soundAlert;
+                        setSoundAlert(val);
+                        localStorage.setItem('noiseMonitorSoundAlert', String(val));
+                        triggerHaptic('light');
+                      }}
+                      className={`relative shrink-0 w-12 h-7 rounded-full transition-colors duration-200 ${
+                        soundAlert ? 'bg-purple-600' : 'bg-gray-300'
+                      }`}
+                      aria-label="Переключить звуковой сигнал"
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                          soundAlert ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
                   </div>
 
-                  {/* Ползунок громкости (показывается только если сигнал включен и не "Без звука") */}
+                  {/* Ползунок громкости и кнопка проверки */}
                   {soundAlert && soundType !== 'none' && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-600 flex justify-between">
-                        <span>Громкость сигнала</span>
-                        <span className="text-purple-600 font-semibold">{soundVolume}%</span>
-                      </label>
-                      <input
-                        type="range"
-                        min={10}
-                        max={100}
-                        value={soundVolume}
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          setSoundVolume(val);
-                          localStorage.setItem('noiseMonitorVolume', String(val));
-                          triggerHaptic('light');
-                        }}
-                        className="w-full accent-purple-600 h-2 cursor-pointer mt-1"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={cleanup}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-xl py-3 min-h-12 transition-colors touch-manipulation flex items-center justify-center gap-2"
-            >
-              <MicOff className="w-5 h-5" />
-              Выключить микрофон
-            </button>
-          </>
-        )}
-
-        <div className="mb-4">
-          <YandexAdBlock />
-        </div>
-      </main>
-    </div>
-  );
-}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-gray-600">
+                          Громкость сигнала
+                        </label
