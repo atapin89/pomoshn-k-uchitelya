@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RefreshCw, Check, AlertTriangle, Grid3x3, FileText, Download, Share2 } from 'lucide-react';
+import { RefreshCw, Check, AlertTriangle, Grid3x3, FileText, Download, Share2, ArrowLeft } from 'lucide-react';
 import { generateBatch } from '@/lib/wordSearchGenerator';
 import type { WordSearchResult, WordSearchConfig } from '@/types';
 import { triggerHaptic } from '@/lib/haptic';
@@ -96,7 +96,7 @@ const generateCanvas = (
         else if (dr === 1 && dc === 1) arrow = '↘';
         else if (dr === 1 && dc === -1) arrow = '↙';
         else if (dr === -1 && dc === 1) arrow = '↗';
-        else if (dr === -1 && dc === -1) arrow = '↖';
+        else if (dr === -1 && dc === -1) arrow = '';
 
         if (arrow) {
           const x = startX + last.col * (cellSize + gap);
@@ -168,7 +168,7 @@ const downloadImage = (canvas: HTMLCanvasElement, filename: string) => {
   document.body.removeChild(link);
 };
 
-// Поделиться PNG через системное меню (только на мобильных)
+// Поделиться PNG через системное меню
 const shareImage = async (canvas: HTMLCanvasElement, filename: string): Promise<boolean> => {
   if (!navigator.share || !navigator.canShare) return false;
   
@@ -192,32 +192,120 @@ const shareImage = async (canvas: HTMLCanvasElement, filename: string): Promise<
   }
 };
 
-// Открытие PDF в новой вкладке (самый надежный способ на всех устройствах)
-const openPDF = (doc: jsPDF) => {
-  const dataUrl = doc.output('datauristring');
-  const newWindow = window.open();
-  if (newWindow) {
-    newWindow.document.write(`
-      <html>
-        <head>
-          <title>Филворды</title>
-          <style>
-            body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f3f4f6; }
-            iframe { width: 100%; height: 100vh; border: none; }
-            .hint { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 20px; border-radius: 8px; font-family: sans-serif; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <iframe src="${dataUrl}"></iframe>
-          <div class="hint">💡 Нажмите на иконку скачивания в правом верхнем углу браузера, чтобы сохранить PDF</div>
-        </body>
-      </html>
-    `);
-    newWindow.document.close();
-  } else {
-    // Если popup заблокирован — используем стандартное скачивание
-    doc.save('филворды.pdf');
-  }
+// Компонент просмотра PDF
+const PDFViewerScreen = ({ 
+  pdfDataUrl, 
+  filename, 
+  onBack 
+}: { 
+  pdfDataUrl: string; 
+  filename: string; 
+  onBack: () => void;
+}) => {
+  const [actionMessage, setActionMessage] = useState('');
+
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = pdfDataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setActionMessage('Файл сохранен');
+    triggerHaptic('light');
+    setTimeout(() => setActionMessage(''), 2000);
+  };
+
+  const handleShare = async () => {
+    if (!navigator.share || !navigator.canShare) {
+      handleDownload();
+      return;
+    }
+
+    try {
+      const response = await fetch(pdfDataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], filename, { type: 'application/pdf' });
+      
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Филворды',
+        });
+        setActionMessage('Файл отправлен');
+        triggerHaptic('light');
+        setTimeout(() => setActionMessage(''), 2000);
+      } else {
+        handleDownload();
+      }
+    } catch (err) {
+      console.log('Share failed', err);
+    }
+  };
+
+  return (
+    <div className="min-h-[100dvh] bg-gray-50 flex flex-col">
+      {/* Шапка с кнопками действий */}
+      <header className="bg-purple-700 shadow-md sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-5 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 text-white font-semibold"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Назад
+            </button>
+            <h1 className="text-lg font-bold text-white">PDF</h1>
+            <div className="w-20" /> {/* Для центрирования заголовка */}
+          </div>
+        </div>
+      </header>
+
+      {/* Кнопки действий */}
+      <div className="max-w-md mx-auto w-full px-5 py-3">
+        <div className="flex gap-2">
+          <button
+            onClick={handleDownload}
+            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-md"
+          >
+            <Download className="w-5 h-5" />
+            Скачать
+          </button>
+          <button
+            onClick={handleShare}
+            className="flex-1 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-md"
+          >
+            <Share2 className="w-5 h-5" />
+            Отправить
+          </button>
+        </div>
+        {actionMessage && (
+          <div className="mt-2 bg-green-50 border border-green-200 rounded-lg p-2 text-center">
+            <p className="text-sm text-green-700">{actionMessage}</p>
+          </div>
+        )}
+        <p className="text-xs text-gray-500 text-center mt-2">
+          💡 Для сохранения: нажмите "Скачать" или используйте меню браузера (⋮)
+        </p>
+      </div>
+
+      {/* Просмотр PDF */}
+      <div className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200" style={{ height: 'calc(100dvh - 220px)' }}>
+          <iframe
+            src={pdfDataUrl}
+            title="Филворды PDF"
+            className="w-full h-full border-0"
+          />
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <YandexAdBlock />
+      </div>
+    </div>
+  );
 };
 
 export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
@@ -231,6 +319,9 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [exportError, setExportError] = useState('');
   const [exportSuccess, setExportSuccess] = useState('');
+  
+  // Состояние для просмотра PDF
+  const [pdfView, setPdfView] = useState<{ dataUrl: string; filename: string } | null>(null);
 
   const handleGenerate = async (count: number) => {
     if (!wordsInput.trim()) return;
@@ -254,6 +345,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     const canvas = generateCanvas(result, showAnswers, showWordList, index + 1, false);
     downloadImage(canvas, `филворд_вариант_${index + 1}.png`);
     setExportSuccess('Изображение скачано');
+    setTimeout(() => setExportSuccess(''), 2000);
   };
 
   const handleShareImage = async (result: WordSearchResult, index: number) => {
@@ -265,10 +357,10 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     if (success) {
       setExportSuccess('Изображение отправлено');
     } else {
-      // Фоллбэк на скачивание
       downloadImage(canvas, `филворд_вариант_${index + 1}.png`);
-      setExportSuccess('Изображение скачано (отправка недоступна)');
+      setExportSuccess('Изображение скачано');
     }
+    setTimeout(() => setExportSuccess(''), 2000);
   };
 
   const downloadAsPDF = async () => {
@@ -296,9 +388,11 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
       }
       
-      // Открываем PDF в новой вкладке — это работает на всех устройствах
-      openPDF(doc);
-      setExportSuccess('PDF открыт в новой вкладке. Сохраните его через меню браузера');
+      // Получаем PDF как data URL и переходим на экран просмотра
+      const dataUrl = doc.output('datauristring');
+      const filename = `филворды_${results.length}шт.pdf`;
+      
+      setPdfView({ dataUrl, filename });
       
     } catch (err) {
       console.error('PDF generation error:', err);
@@ -314,6 +408,17 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     if (size === 15) return { width: 'min(100%, 360px)', fontSize: 'text-xs sm:text-sm', cellSize: '24px' };
     return { width: 'min(100%, 320px)', fontSize: 'text-sm sm:text-base', cellSize: '32px' };
   };
+
+  // Если открыт просмотр PDF — показываем отдельный экран
+  if (pdfView) {
+    return (
+      <PDFViewerScreen
+        pdfDataUrl={pdfView.dataUrl}
+        filename={pdfView.filename}
+        onBack={() => setPdfView(null)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] notebook-bg flex flex-col">
