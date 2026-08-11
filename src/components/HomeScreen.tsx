@@ -49,7 +49,18 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
     <div className="min-h-[100dvh] notebook-bg flex flex-col">
       <header className="max-w-md mx-auto w-full px-5 pt-12 pb-6 text-center">
         <h1 className="text-4xl font-extrabold text-purple-700">Помощник учителя</h1>
-        <p className="text-gray-500 mt-2">Выберите инструмент для урока</p>
+        <p className="text-gray-500 mt-2">Простые инструменты на каждый день</p>
+        <p className="text-right mt-3 text-sm text-gray-500">
+          Проект{' '}
+          <a 
+            href="https://vk.ru/aaatapin" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-purple-600 hover:text-purple-800 font-semibold underline transition-colors"
+          >
+            Алексея Атапина
+          </a>
+        </p>
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
@@ -83,8 +94,8 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           })}
           
           {/* Пустая ячейка для будущего раздела */}
-          <div className="rounded-2xl border-2 border-dashed border-purple-200 min-h-[140px] flex items-center justify-center">
-            <p className="text-purple-400 text-sm text-center px-2">Новый раздел скоро</p>
+          <div className="rounded-2xl border-2 border-dashed border-purple-200 min-h-[140px] flex items-center justify-center bg-purple-50/50">
+            <p className="text-purple-400 text-sm text-center px-2 font-medium">Новый раздел скоро</p>
           </div>
         </div>
       </main>
