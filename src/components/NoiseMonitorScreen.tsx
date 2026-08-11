@@ -22,7 +22,7 @@ const COLORS = [
   '#c084fc', '#d8b4fe', '#6d28d9', '#e9d5ff',
 ];
 
-const EMOJIS = ['😊', '😮', '😡', '😴', '🤔', '😲', '', '😬'];
+const EMOJIS = ['😊', '😮', '😡', '😴', '🤔', '😲', '🙄', '😬'];
 
 function createBalls(count: number, width: number, height: number): Ball[] {
   const balls: Ball[] = [];
@@ -113,12 +113,10 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
     setActive(false);
   }, []);
 
-  // НАДЁЖНАЯ функция воспроизведения звука
   const playSound = (ctx: AudioContext, type: SoundType, volumePercent: number) => {
     if (type === 'none') return;
     if (!ctx || ctx.state === 'closed') return;
 
-    // Разблокируем контекст
     if (ctx.state === 'suspended') {
       ctx.resume().catch(() => {});
     }
@@ -187,7 +185,6 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
       return;
     }
     
-    // Принудительно разблокируем контекст
     if (ctx.state === 'suspended') {
       await ctx.resume();
     }
@@ -218,11 +215,25 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
 
       setActive(true);
     } catch (e: any) {
+      // ШАГ 5: ДИАГНОСТИКА
+      // Эта информация соберется автоматически при ошибке и поможет найти причину
+      const debugInfo = [
+        `mediaDevices: ${!!navigator.mediaDevices}`,
+        `getUserMedia: ${!!navigator.mediaDevices?.getUserMedia}`,
+        `protocol: ${window.location.protocol}`,
+        `hostname: ${window.location.hostname}`,
+        `errorName: ${e?.name || 'Unknown'}`,
+      ];
+      
+      let userMessage = 'Не удалось получить доступ к микрофону.';
       if (e?.name === 'NotAllowedError') {
-        setError('Доступ к микрофону запрещён. Разрешите доступ в настройках браузера.');
-      } else {
-        setError('Не удалось получить доступ к микрофону.');
+        userMessage = 'Доступ к микрофону запрещён. Разрешите доступ в настройках приложения.';
+      } else if (e?.name === 'NotFoundError') {
+        userMessage = 'Микрофон не найден на устройстве.';
       }
+      
+      // Показываем пользователю понятное сообщение + технические данные для отправки разработчику
+      setError(`${userMessage}\n\n[Диагностика]:\n${debugInfo.join('\n')}`);
     }
   };
 
@@ -276,7 +287,6 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
           loudSinceRef.current = Date.now();
         } else if (Date.now() - loudSinceRef.current > 2000) {
           if (Date.now() - lastBeepRef.current > 3000) {
-            // Разблокируем контекст перед воспроизведением
             if (audioCtx.state === 'suspended') {
               audioCtx.resume().catch(() => {});
             }
@@ -415,7 +425,8 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
             <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
               <MicOff className="w-10 h-10 text-red-500" />
             </div>
-            <p className="text-sm text-red-600 text-center max-w-xs">{error}</p>
+            {/* whitespace-pre-line сохраняет переносы строк для красивого отображения диагностики */}
+            <p className="text-sm text-red-600 text-center max-w-xs whitespace-pre-line">{error}</p>
             <button
               onClick={startMic}
               className="bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-2xl px-6 py-3 min-h-12 transition-colors touch-manipulation"
@@ -548,7 +559,6 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
                     />
                   </div>
 
-                  {/* Блок звукового сигнала — ИСПРАВЛЕНА ВЕРСТКА */}
                   <div className="flex items-center justify-between w-full min-h-12 gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <span className="text-sm font-medium text-gray-700 shrink-0">Звуковой сигнал</span>
@@ -592,7 +602,6 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
                     </button>
                   </div>
 
-                  {/* Ползунок громкости и кнопка проверки */}
                   {soundAlert && soundType !== 'none' && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
