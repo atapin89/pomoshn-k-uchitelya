@@ -184,7 +184,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     }
     
     // 2. Создаем Canvas для страницы ответов (чтобы поддержать кириллицу)
-    const itemsPerPage = 4;
+    const itemsPerPage = 16; // ИЗМЕНЕНО: 16 вместо 4 (в 4 раза больше)
     const totalPagesForAnswers = Math.ceil(results.length / itemsPerPage);
     
     for (let p = 0; p < totalPagesForAnswers; p++) {
@@ -202,7 +202,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, pageWidth, pageHeight);
       
-      // Заголовок (по тому же принципу, что и "Вариант X" в generateCanvas)
+      // Заголовок
       ctx.fillStyle = '#783296';
       ctx.font = 'bold 20px Arial, sans-serif';
       ctx.textAlign = 'center';
@@ -235,13 +235,13 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         ctx.fillText(currentLine, pageWidth / 2, yPos);
       }
       
-      // Миниатюры
-      const cols = 2;
-      const rows = 2;
-      const gap = 12;
-      const headerHeight = 55; // Достаточно места для заголовка и списка слов
-      const colWidth = (usableWidth - gap) / cols;
-      const rowHeight = (pageHeight - margin * 2 - headerHeight - (rows - 1) * gap) / rows;
+      // Миниатюры - сетка 4×4 (16 штук на странице)
+      const cols = 4; // ИЗМЕНЕНО: 4 вместо 2
+      const rows = 4; // ИЗМЕНЕНО: 4 вместо 2
+      const gap = 8; // ИЗМЕНЕНО: уменьшен отступ для компактности
+      const headerHeight = 50;
+      const colWidth = (usableWidth - (cols - 1) * gap) / cols; // ~40 мм
+      const rowHeight = (pageHeight - margin * 2 - headerHeight - (rows - 1) * gap) / rows; // ~55 мм
       const startY = margin + headerHeight;
       
       for (let i = 0; i < itemsPerPage; i++) {
