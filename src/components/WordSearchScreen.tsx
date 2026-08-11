@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, RefreshCw, Check, AlertTriangle, Grid3x3, FileText, Share2, ExternalLink } from 'lucide-react';
+import { Download, RefreshCw, Check, AlertTriangle, Grid3x3, FileText, Share2 } from 'lucide-react';
 import { generateBatch } from '@/lib/wordSearchGenerator';
 import type { WordSearchResult, WordSearchConfig } from '@/types';
 import { triggerHaptic } from '@/lib/haptic';
@@ -157,11 +157,32 @@ const generateCanvas = (
   return canvas;
 };
 
-// Функция для открытия/скачивания файла на мобильных устройствах
-const openOrShareFile = async (blob: Blob, filename: string, mimeType: string): Promise<boolean> => {
-  // 1. Попытка использовать нативный "Поделиться" (работает для PNG)
+// Функция для скачивания файла через MAX Bridge
+const downloadFileViaMax = async (blob: Blob, filename: string): Promise<boolean> => {
+  // Проверяем наличие MAX Bridge
+  if (typeof window !== 'undefined' && (window as any).WebApp?.downloadFile) {
+    try {
+      const url = URL.createObjectURL(blob);
+      await (window as any).WebApp.downloadFile(url, filename);
+      URL.revokeObjectURL(url);
+      return true;
+    } catch (err) {
+      console.error('MAX downloadFile failed:', err);
+      return false;
+    }
+  }
+  return false;
+};
+
+// Функция для скачивания/шаринга PNG
+const shareOrDownloadPNG = async (blob: Blob, filename: string): Promise<boolean> => {
+  // 1. Попытка использовать MAX Bridge
+  const maxSuccess = await downloadFileViaMax(blob, filename);
+  if (maxSuccess) return true;
+
+  // 2. Попытка использовать нативный "Поделиться"
   if (navigator.share && navigator.canShare) {
-    const file = new File([blob], filename, { type: mimeType });
+    const file = new File([blob], filename, { type: 'image/png' });
     if (navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
@@ -175,29 +196,16 @@ const openOrShareFile = async (blob: Blob, filename: string, mimeType: string): 
     }
   }
 
-  // 2. Для PDF и других файлов — открываем в новой вкладке через Blob URL
-  // Это самый надежный способ на мобильных устройствах
-  try {
-    const blobUrl = URL.createObjectURL(blob);
-    
-    // Создаем временную ссылку и кликаем по ней
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = filename;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Освобождаем URL через небольшую задержку (чтобы браузер успел обработать)
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-    
-    return true;
-  } catch (err) {
-    console.error('File open failed:', err);
-    return false;
-  }
+  // 3. Фоллбэк на стандартный download
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  return true;
 };
 
 export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
@@ -238,9 +246,9 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         setExportError('Не удалось создать изображение');
         return;
       }
-      const success = await openOrShareFile(blob, `филворд_вариант_${index + 1}.png`, 'image/png');
+      const success = await shareOrDownloadPNG(blob, `филворд_вариант_${index + 1}.png`);
       if (success) {
-        setExportSuccess('Изображение готово к сохранению');
+        setExportSuccess('Изображение сохранено');
       } else {
         setExportError('Не удалось сохранить изображение');
       }
@@ -276,12 +284,13 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       const pdfBlob = doc.output('blob');
       const filename = `филворды_${results.length}шт.pdf`;
       
-      const success = await openOrShareFile(pdfBlob, filename, 'application/pdf');
+      // Используем MAX Bridge для скачивания
+      const success = await downloadFileViaMax(pdfBlob, filename);
       
       if (success) {
-        setExportSuccess('PDF готов! Если файл не скачался автоматически — проверьте загрузки браузера');
+        setExportSuccess('PDF скачан через MAX');
       } else {
-        setExportError('Не удалось открыть PDF. Попробуйте еще раз.');
+        setExportError('Не удалось скачать PDF. Убедитесь, что приложение открыто в MAX.');
       }
       
     } catch (err) {
