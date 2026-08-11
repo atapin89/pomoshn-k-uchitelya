@@ -56,22 +56,47 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
   const [sensitivity, setSensitivity] = useState(80);
   const [theme, setTheme] = useState<Theme>('balls');
   const [ballCount, setBallCount] = useState(60);
-  const [soundAlert, setSoundAlert] = useState(true);
-  const [soundType, setSoundType] = useState<SoundType>('beep');
   const [threshold, setThreshold] = useState(80);
   const [showSettings, setShowSettings] = useState(true);
   const [noiseLevel, setNoiseLevel] = useState(0);
 
+  // Настройки звука с сохранением в localStorage
+  const [soundVolume, setSoundVolume] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return Number(localStorage.getItem('noiseMonitorVolume')) || 50;
+    }
+    return 50;
+  });
+
+  const [soundType, setSoundType] = useState<SoundType>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('noiseMonitorSoundType') as SoundType) || 'beep';
+    }
+    return 'beep';
+  });
+
+  const [soundAlert, setSoundAlert] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('noiseMonitorSoundAlert');
+      return saved === null ? true : saved === 'true';
+    }
+    return true;
+  });
+
+  // Рефы для доступа к актуальным значениям внутри animationFrame
   const sensitivityRef = useRef(sensitivity);
   const themeRef = useRef(theme);
+  const thresholdRef = useRef(threshold);
   const soundAlertRef = useRef(soundAlert);
   const soundTypeRef = useRef(soundType);
-  const thresholdRef = useRef(threshold);
+  const soundVolumeRef = useRef(soundVolume);
+
   sensitivityRef.current = sensitivity;
   themeRef.current = theme;
+  thresholdRef.current = threshold;
   soundAlertRef.current = soundAlert;
   soundTypeRef.current = soundType;
-  thresholdRef.current = threshold;
+  soundVolumeRef.current = soundVolume;
 
   const cleanup = useCallback(() => {
     if (rafRef.current) {
@@ -90,9 +115,11 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
     setActive(false);
   }, []);
 
-  const playSound = (ctx: AudioContext, type: SoundType) => {
+  const playSound = (ctx: AudioContext, type: SoundType, volumePercent: number) => {
     if (type === 'none') return;
     const now = ctx.currentTime;
+    // Масштабируем громкость от 10% до 100% в диапазон gain 0.05 - 0.5
+    const gainValue = Math.max(0.05, (volumePercent / 100) * 0.5);
 
     if (type === 'beep') {
       const osc = ctx.createOscillator();
@@ -100,7 +127,7 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(880, now);
       osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
-      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.setValueAtTime(gainValue, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -119,7 +146,7 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
       filter.type = 'highpass';
       filter.frequency.value = 4000;
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.setValueAtTime(gainValue, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
       noise.connect(filter);
       filter.connect(gain);
@@ -133,7 +160,7 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(f, now + i * 0.08);
-        gain.gain.setValueAtTime(0.2, now + i * 0.08);
+        gain.gain.setValueAtTime(gainValue, now + i * 0.08);
         gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.4);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -219,7 +246,7 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
           loudSinceRef.current = Date.now();
         } else if (Date.now() - loudSinceRef.current > 2000) {
           if (Date.now() - lastBeepRef.current > 3000) {
-            playSound(audioCtx, soundTypeRef.current);
+            playSound(audioCtx, soundTypeRef.current, soundVolumeRef.current);
             lastBeepRef.current = Date.now();
           }
         }
@@ -299,12 +326,13 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
     return () => cleanup();
   }, [cleanup]);
 
-  const noiseColor =
-    noiseLevel > threshold / 100
-      ? 'bg-red-500 animate-pulse'
-      : noiseLevel > 0.5
-        ? 'bg-violet-500'
-        : 'bg-purple-400';
+  const isLoud = noiseLevel > threshold / 100;
+
+  const noiseColor = isLoud
+    ? 'bg-red-500 animate-pulse'
+    : noiseLevel > 0.5
+    ? 'bg-violet-500'
+    : 'bg-purple-400';
 
   const soundOptions: { id: SoundType; label: string }[] = [
     { id: 'beep', label: 'Бип' },
@@ -384,8 +412,18 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
               </div>
             </div>
 
-            <div className="relative w-full h-96 rounded-2xl overflow-hidden bg-white shadow-md border border-purple-100">
+            {/* Контейнер с анимацией, который становится красным при превышении порога */}
+            <div className={`relative w-full h-96 rounded-2xl overflow-hidden shadow-md border-2 transition-colors duration-300 ${
+              isLoud ? 'bg-red-500 border-red-600' : 'bg-white border-purple-100'
+            }`}>
               <canvas ref={canvasRef} className="w-full h-full block" />
+              {isLoud && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-red-600/20">
+                  <span className="text-5xl font-black text-white drop-shadow-lg animate-pulse tracking-wider">
+                    ТИШЕ!
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-2xl shadow-md p-4">
@@ -481,7 +519,11 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
                     <input
                       type="checkbox"
                       checked={soundAlert}
-                      onChange={(e) => setSoundAlert(e.target.checked)}
+                      onChange={(e) => {
+                        const val = e.target.checked;
+                        setSoundAlert(val);
+                        localStorage.setItem('noiseMonitorSoundAlert', String(val));
+                      }}
                       className="w-5 h-5 accent-purple-600 cursor-pointer"
                     />
                     <span className="text-sm font-medium text-gray-700">
@@ -490,27 +532,49 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
                   </label>
 
                   {soundAlert && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-600 block mb-2">Звуковой сигнал</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {soundOptions.map((opt) => (
-                          <button
-                            key={opt.id}
-                            onClick={() => {
-                              setSoundType(opt.id);
+                    <>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">Звуковой сигнал</label>
+                        <select
+                          value={soundType}
+                          onChange={(e) => {
+                            const val = e.target.value as SoundType;
+                            setSoundType(val);
+                            localStorage.setItem('noiseMonitorSoundType', val);
+                            triggerHaptic('light');
+                          }}
+                          className="w-full rounded-xl border border-purple-200 p-3 bg-white focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-800 appearance-none"
+                        >
+                          {soundOptions.map((opt) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {soundType !== 'none' && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-600 flex justify-between">
+                            <span>Громкость сигнала</span>
+                            <span className="text-purple-600 font-semibold">{soundVolume}%</span>
+                          </label>
+                          <input
+                            type="range"
+                            min={10}
+                            max={100}
+                            value={soundVolume}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setSoundVolume(val);
+                              localStorage.setItem('noiseMonitorVolume', String(val));
                               triggerHaptic('light');
                             }}
-                            className={`py-2.5 rounded-xl text-sm font-semibold transition-all min-h-12 touch-manipulation ${
-                              soundType === opt.id
-                                ? 'bg-purple-100 text-purple-800 border-2 border-purple-500'
-                                : 'bg-gray-50 text-gray-500 border-2 border-transparent'
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                            className="w-full accent-purple-600 h-2 cursor-pointer mt-1"
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
