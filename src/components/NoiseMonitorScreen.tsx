@@ -22,7 +22,7 @@ const COLORS = [
   '#c084fc', '#d8b4fe', '#6d28d9', '#e9d5ff',
 ];
 
-const EMOJIS = ['😊', '😮', '😡', '😴', '🤔', '😲', '🙄', '😬'];
+const EMOJIS = ['😊', '😮', '', '😴', '🤔', '😲', '🙄', '😬'];
 
 function createBalls(count: number, width: number, height: number): Ball[] {
   const balls: Ball[] = [];
@@ -60,7 +60,6 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
   const [showSettings, setShowSettings] = useState(true);
   const [noiseLevel, setNoiseLevel] = useState(0);
 
-  // Настройки звука с сохранением в localStorage
   const [soundVolume, setSoundVolume] = useState(() => {
     if (typeof window !== 'undefined') {
       return Number(localStorage.getItem('noiseMonitorVolume')) || 50;
@@ -117,13 +116,11 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
   const playSound = (ctx: AudioContext, type: SoundType, volumePercent: number) => {
     if (type === 'none') return;
     
-    // КРИТИЧЕСКИ ВАЖНО: разблокируем аудио по любому действию
     if (ctx.state === 'suspended') {
       ctx.resume();
     }
     
     const now = ctx.currentTime;
-    // Увеличена базовая громкость для гарантированной слышимости
     const gainValue = Math.max(0.15, (volumePercent / 100) * 0.8);
 
     if (type === 'beep') {
@@ -175,7 +172,6 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
     }
   };
 
-  // Функция для ручной проверки звука (разблокирует AudioContext в браузере)
   const testSound = () => {
     if (audioContextRef.current) {
       playSound(audioContextRef.current, soundType, soundVolume);
@@ -195,7 +191,6 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
       const ctx = new AudioCtx();
       audioContextRef.current = ctx;
       
-      // Разблокируем AudioContext по клику пользователя
       if (ctx.state === 'suspended') {
         await ctx.resume();
       }
@@ -534,7 +529,7 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
                     />
                   </div>
 
-                  {/* ИСПРАВЛЕННЫЙ БЛОК: Переключатель зафиксирован справа, выбор появляется между текстом и переключателем */}
+                  {/* Блок звукового сигнала */}
                   <div className="flex items-center justify-between w-full min-h-12">
                     <div className="flex items-center gap-2 flex-1 overflow-hidden">
                       <span className="text-sm font-medium text-gray-700 shrink-0">Звуковой сигнал</span>
@@ -558,7 +553,6 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
                       )}
                     </div>
                     
-                    {/* Toggle Switch (всегда справа, не двигается) */}
                     <button
                       onClick={() => {
                         const val = !soundAlert;
@@ -583,6 +577,55 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
                   {soundAlert && soundType !== 'none' && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-gray-600">
+                        <span className="text-sm font-medium text-gray-600">
                           Громкость сигнала
-                        </label
+                        </span>
+                        <button
+                          onClick={testSound}
+                          className="flex items-center gap-1 text-xs font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 px-2 py-1 rounded-lg transition-colors"
+                        >
+                          <Volume className="w-3.5 h-3.5" />
+                          Проверить
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="range"
+                          min={10}
+                          max={100}
+                          value={soundVolume}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setSoundVolume(val);
+                            localStorage.setItem('noiseMonitorVolume', String(val));
+                            triggerHaptic('light');
+                          }}
+                          className="flex-1 accent-purple-600 h-2 cursor-pointer"
+                        />
+                        <span className="text-sm font-semibold text-purple-600 w-10 text-right">
+                          {soundVolume}%
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={cleanup}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-xl py-3 min-h-12 transition-colors touch-manipulation flex items-center justify-center gap-2"
+            >
+              <MicOff className="w-5 h-5" />
+              Выключить микрофон
+            </button>
+          </>
+        )}
+
+        <div className="mb-4">
+          <YandexAdBlock />
+        </div>
+      </main>
+    </div>
+  );
+}
