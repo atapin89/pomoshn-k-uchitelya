@@ -47,9 +47,9 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
 
   return (
     <div className="min-h-[100dvh] notebook-bg flex flex-col">
-      <header className="max-w-md mx-auto w-full px-5 pt-10 pb-6 text-center">
-        {/* Ссылка на автора теперь НАД заголовком, выровнена по правому краю */}
-        <p className="text-right text-sm text-gray-500 mb-4">
+      <header className="max-w-md mx-auto w-full px-5 pt-12 pb-6 text-center">
+        {/* Подпись автора НАД заголовком с минимальным отступом */}
+        <p className="text-right text-sm text-gray-500 mb-1">
           Проект{' '}
           <a 
             href="https://vk.ru/aaatapin" 
