@@ -82,6 +82,39 @@ const generateCanvas = (
     }
   }
   
+  // Рисуем стрелки направления для ответов
+  if (showAnswers) {
+    result.placedWords.forEach(pw => {
+      if (pw.cells.length > 1) {
+        const first = pw.cells[0];
+        const last = pw.cells[pw.cells.length - 1];
+        const dr = last.row - first.row;
+        const dc = last.col - first.col;
+        
+        let arrow = '';
+        if (dr === 0 && dc === 1) arrow = '→';
+        else if (dr === 0 && dc === -1) arrow = '←';
+        else if (dr === 1 && dc === 0) arrow = '↓';
+        else if (dr === -1 && dc === 0) arrow = '↑';
+        else if (dr === 1 && dc === 1) arrow = '↘';
+        else if (dr === 1 && dc === -1) arrow = '↙';
+        else if (dr === -1 && dc === 1) arrow = '↗';
+        else if (dr === -1 && dc === -1) arrow = '↖';
+
+        if (arrow) {
+          const x = startX + last.col * (cellSize + gap);
+          const y = startY + last.row * (cellSize + gap);
+          ctx.fillStyle = '#dc2626'; // Контрастный красный цвет
+          ctx.font = `900 ${isMiniature ? 10 : 16}px Arial, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          // Рисуем стрелку в правом верхнем углу последней ячейки слова
+          ctx.fillText(arrow, x + cellSize * 0.75, y + cellSize * 0.35);
+        }
+      }
+    });
+  }
+  
   // Список слов
   if (showWords) {
     const dividerY = startY + gridHeight + (isMiniature ? 15 : 30);
@@ -172,6 +205,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
     const pageHeight = doc.internal.pageSize.getHeight(); // 297 мм (A4)
     const margin = 10;
     const usableWidth = pageWidth - margin * 2; // 190 мм
+    const usableHeight = pageHeight - margin * 2; // 277 мм
     
     // 1. Генерируем основные варианты для учеников (по 1 на страницу)
     for (let i = 0; i < results.length; i++) {
@@ -183,8 +217,8 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
     }
     
-    // 2. Создаем Canvas для страницы ответов (чтобы поддержать кириллицу)
-    const itemsPerPage = 16; // ИЗМЕНЕНО: 16 вместо 4 (в 4 раза больше)
+    // 2. Создаем Canvas для страницы ответов (ТОЛЬКО СЕТКА, без заголовка и списка слов)
+    const itemsPerPage = 25; // 5x5 сетка (25 вариантов на страницу)
     const totalPagesForAnswers = Math.ceil(results.length / itemsPerPage);
     
     for (let p = 0; p < totalPagesForAnswers; p++) {
@@ -202,47 +236,14 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, pageWidth, pageHeight);
       
-      // Заголовок
-      ctx.fillStyle = '#783296';
-      ctx.font = 'bold 20px Arial, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('ОТВЕТЫ ДЛЯ ПЕДАГОГА', pageWidth / 2, 20);
+      // Сетка 5x5 для максимальной компактности
+      const cols = 5;
+      const rows = 5;
+      const gap = 6;
       
-      // Список слов
-      const wordListString = results[0].placedWords.map(pw => pw.word).join(', ');
-      ctx.fillStyle = '#646464';
-      ctx.font = '12px Arial, sans-serif';
-      
-      const wordsLines = wordListString.split(', ');
-      let currentLine = 'Зашифрованные слова: ';
-      let yPos = 35;
-      
-      wordsLines.forEach((word, idx) => {
-        const testLine = currentLine + word + (idx < wordsLines.length - 1 ? ', ' : '');
-        const metrics = ctx.measureText(testLine);
-        
-        if (metrics.width > usableWidth && currentLine !== 'Зашифрованные слова: ') {
-          ctx.fillText(currentLine, pageWidth / 2, yPos);
-          currentLine = word + ', ';
-          yPos += 15;
-        } else {
-          currentLine = testLine;
-        }
-      });
-      
-      if (currentLine) {
-        ctx.fillText(currentLine, pageWidth / 2, yPos);
-      }
-      
-      // Миниатюры - сетка 4×4 (16 штук на странице)
-      const cols = 4; // ИЗМЕНЕНО: 4 вместо 2
-      const rows = 4; // ИЗМЕНЕНО: 4 вместо 2
-      const gap = 8; // ИЗМЕНЕНО: уменьшен отступ для компактности
-      const headerHeight = 50;
-      const colWidth = (usableWidth - (cols - 1) * gap) / cols; // ~40 мм
-      const rowHeight = (pageHeight - margin * 2 - headerHeight - (rows - 1) * gap) / rows; // ~55 мм
-      const startY = margin + headerHeight;
+      const colWidth = (usableWidth - (cols - 1) * gap) / cols;
+      const rowHeight = (usableHeight - (rows - 1) * gap) / rows;
+      const startY = margin;
       
       for (let i = 0; i < itemsPerPage; i++) {
         const globalIndex = p * itemsPerPage + i;
@@ -254,6 +255,7 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
         const x = margin + col * (colWidth + gap);
         const y = startY + row * (rowHeight + gap);
         
+        // Генерируем миниатюру с ответами и стрелками
         const miniCanvas = generateCanvas(results[globalIndex], true, false, globalIndex + 1, true);
         const imgW = colWidth;
         const imgH = (miniCanvas.height * imgW) / miniCanvas.width;
@@ -363,7 +365,6 @@ export default function WordSearchScreen({ onBack }: { onBack: () => void }) {
 
         {results.length > 0 && (
           <div className="flex flex-col gap-3">
-            {/* Компактные кнопки в одну строку */}
             <div className="flex gap-2">
               <button
                 onClick={() => { setShowAnswers(!showAnswers); triggerHaptic('light'); }}
