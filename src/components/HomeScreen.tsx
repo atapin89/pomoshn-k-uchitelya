@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3 } from 'lucide-react';
+import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen } from 'lucide-react';
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
@@ -66,7 +66,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
-        {/* Сетка 2×3 */}
+        {/* Сетка разделов */}
         <div className="grid grid-cols-2 gap-4">
           {sections.map((section) => {
             const Icon = section.icon;
@@ -100,6 +100,15 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
             <p className="text-purple-400 text-sm text-center px-2 font-medium">Новый раздел скоро</p>
           </div>
         </div>
+
+        {/* Кнопка перехода к руководству (под сеткой) */}
+        <button
+          onClick={() => onNavigate('manual')}
+          className="w-full mt-6 bg-white hover:bg-purple-50 border-2 border-purple-200 text-purple-700 font-semibold rounded-2xl py-4 flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-sm"
+        >
+          <BookOpen className="w-5 h-5" />
+          Подробное руководство по использованию
+        </button>
       </main>
 
       <YandexAdBlock />
