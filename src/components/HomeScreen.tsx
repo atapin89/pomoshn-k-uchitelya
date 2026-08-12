@@ -101,14 +101,16 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           </div>
         </div>
 
-        {/* Кнопка перехода к руководству (под сеткой) */}
-        <button
-          onClick={() => onNavigate('manual')}
-          className="w-full mt-6 bg-white hover:bg-purple-50 border-2 border-purple-200 text-purple-700 font-semibold rounded-2xl py-4 flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-sm"
-        >
-          <BookOpen className="w-5 h-5" />
-          Подробное руководство по использованию
-        </button>
+        {/* Неброская текстовая ссылка на руководство */}
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={() => onNavigate('manual')}
+            className="flex items-center gap-2 text-gray-500 hover:text-purple-600 text-sm font-medium transition-colors"
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>Руководство по использованию</span>
+          </button>
+        </div>
       </main>
 
       <YandexAdBlock />
