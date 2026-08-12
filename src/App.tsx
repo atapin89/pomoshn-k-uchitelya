@@ -12,9 +12,11 @@ import NoiseMonitorScreen from '@/components/NoiseMonitorScreen';
 import FlashcardsScreen from '@/components/FlashcardsScreen';
 import StudyScreen from '@/components/StudyScreen';
 import QuizScreen from '@/components/QuizScreen';
-import WordSearchScreen from '@/components/WordSearchScreen'; // <-- ДОБАВЛЕН ИМПОРТ
+import WordSearchScreen from '@/components/WordSearchScreen';
+import ManualScreen from '@/components/ManualScreen'; // <-- ДОБАВЛЕН ИМПОРТ РУКОВОДСТВА
 
-type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch'; // <-- ДОБАВЛЕН 'wordsearch'
+// <-- ДОБАВЛЕН 'manual' в типы маршрутов
+type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual';
 
 export default function App() {
   const [route, setRoute] = useState<Route>('home');
@@ -78,7 +80,7 @@ export default function App() {
     return <HomeScreen onNavigate={setRoute} />;
   }
 
-  // 2. Генератор случайностей
+  // 2. Генератор случайностей (Жеребьёвка)
   if (route === 'generator') {
     return <GeneratorScreen onBack={() => setRoute('home')} />;
   }
@@ -125,12 +127,17 @@ export default function App() {
     );
   }
 
-  // 7. Генератор филвордов <-- ДОБАВЛЕН НОВЫЙ МАРШРУТ
+  // 7. Генератор филвордов
   if (route === 'wordsearch') {
     return <WordSearchScreen onBack={() => setRoute('home')} />;
   }
 
-  // 8. Активный таймер урока
+  // 8. Руководство по использованию <-- ДОБАВЛЕН НОВЫЙ МАРШРУТ
+  if (route === 'manual') {
+    return <ManualScreen onBack={() => setRoute('home')} />;
+  }
+
+  // 9. Активный таймер урока
   if (activeTemplate) {
     return (
       <ActiveTimer
@@ -141,7 +148,7 @@ export default function App() {
     );
   }
 
-  // 9. Список шаблонов таймера (по умолчанию)
+  // 10. Список шаблонов таймера (по умолчанию)
   return (
     <>
       <TemplateList
