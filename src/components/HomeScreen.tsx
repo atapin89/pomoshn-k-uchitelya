@@ -47,22 +47,32 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
 
   return (
     <div className="min-h-[100dvh] notebook-bg flex flex-col">
-      <header className="max-w-md mx-auto w-full px-5 pt-12 pb-6 text-center">
-        {/* Подпись автора НАД заголовком с минимальным отступом */}
-        <p className="text-right text-sm text-gray-500 mb-1">
-          Проект{' '}
-          <a 
-            href="https://vk.ru/aaatapin" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-purple-600 hover:text-purple-800 font-semibold underline transition-colors"
+      <header className="max-w-md mx-auto w-full px-5 pt-12 pb-6">
+        {/* Верхняя строка: иконка руководства слева, подпись автора справа */}
+        <div className="flex items-center justify-between mb-1">
+          <button
+            onClick={() => onNavigate('manual')}
+            className="text-gray-400 hover:text-purple-600 transition-colors p-1"
+            aria-label="Руководство по использованию"
           >
-            Алексея Атапина
-          </a>
-        </p>
+            <BookOpen className="w-5 h-5" />
+          </button>
+          
+          <p className="text-sm text-gray-500">
+            Проект{' '}
+            <a 
+              href="https://vk.ru/aaatapin" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-purple-600 hover:text-purple-800 font-semibold underline transition-colors"
+            >
+              Алексея Атапина
+            </a>
+          </p>
+        </div>
         
-        <h1 className="text-4xl font-extrabold text-purple-700">Помощник учителя</h1>
-        <p className="text-gray-500 mt-2">Простые инструменты на каждый день</p>
+        <h1 className="text-4xl font-extrabold text-purple-700 text-center">Помощник учителя</h1>
+        <p className="text-gray-500 mt-2 text-center">Простые инструменты на каждый день</p>
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
@@ -99,17 +109,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           <div className="rounded-2xl border-2 border-dashed border-purple-200 min-h-[140px] flex items-center justify-center bg-purple-50/50">
             <p className="text-purple-400 text-sm text-center px-2 font-medium">Новый раздел скоро</p>
           </div>
-        </div>
-
-        {/* Неброская текстовая ссылка на руководство */}
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={() => onNavigate('manual')}
-            className="flex items-center gap-2 text-gray-500 hover:text-purple-600 text-sm font-medium transition-colors"
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>Руководство по использованию</span>
-          </button>
         </div>
       </main>
 
