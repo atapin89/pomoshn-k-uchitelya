@@ -21,7 +21,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
     },
     {
       id: 'generator',
-      title: 'Генератор',
+      title: 'Жеребьёвка',
       description: 'Случайный выбор',
       icon: Dices,
     },
