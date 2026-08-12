@@ -98,7 +98,7 @@ export default function GeneratorScreen({ onBack }: { onBack: () => void }) {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Результат генератора',
+          title: 'Результат жеребьёвки',
           text: textToShare,
         });
         triggerHaptic('light');
@@ -191,7 +191,7 @@ export default function GeneratorScreen({ onBack }: { onBack: () => void }) {
       <header className="bg-purple-700 shadow-md sticky top-0 z-10">
         <div className="max-w-md mx-auto px-5 py-4">
           <BackButton onClick={onBack} variant="light" />
-          <h1 className="text-2xl font-bold text-white mt-3">Генератор случайностей</h1>
+          <h1 className="text-2xl font-bold text-white mt-3">Жеребьёвка</h1>
         </div>
       </header>
 
