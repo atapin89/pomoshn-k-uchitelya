@@ -65,17 +65,23 @@ export default function FlashcardsScreen({ onBack, onStudy, onQuiz }: Flashcards
 
   return (
     <div className="min-h-[100dvh] bg-purple-50 flex flex-col">
+      {/* НОВАЯ КОМПАКТНАЯ ШАПКА */}
       <header className="bg-purple-700 shadow-md sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-5 py-4">
-          <BackButton onClick={onBack} variant="light" />
-          <div className="flex items-center gap-3 mt-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
-              <Layers className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white leading-tight">Флэш-карточки</h1>
-              <p className="text-sm text-white/70">Интервальное повторение</p>
-            </div>
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+          {/* Кнопка назад (не сжимается) */}
+          <div className="shrink-0">
+            <BackButton onClick={onBack} variant="light" />
+          </div>
+          
+          {/* Заголовок и описание (занимают все свободное место, текст обрезается если не влезает) */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <h1 className="text-lg font-bold text-white leading-tight truncate">Флэш-карточки</h1>
+            <p className="text-xs text-purple-200 leading-tight">Интервальное повторение</p>
+          </div>
+          
+          {/* Иконка раздела справа (не сжимается) */}
+          <div className="shrink-0 w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
+            <Layers className="w-5 h-5 text-white" />
           </div>
         </div>
       </header>
