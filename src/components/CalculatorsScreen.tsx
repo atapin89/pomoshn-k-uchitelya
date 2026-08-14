@@ -1,0 +1,568 @@
+import { useState } from 'react';
+import { Calculator, TrendingUp, Award, BookOpen, Target, Users, PieChart, ArrowLeft, Plus, Minus, HelpCircle } from 'lucide-react';
+import BackButton from './BackButton';
+import YandexAdBlock from './YandexAdBlock';
+import { triggerHaptic } from '@/lib/haptic';
+
+type CalculatorType = 'average' | 'final' | 'quarter' | 'test' | 'quality' | 'sou';
+
+export default function CalculatorsScreen({ onBack }: { onBack: () => void }) {
+  const [activeCalculator, setActiveCalculator] = useState<CalculatorType>('average');
+
+  const calculators = [
+    { id: 'average' as const, label: 'Средний балл', icon: TrendingUp },
+    { id: 'final' as const, label: 'Итоговая', icon: Award },
+    { id: 'quarter' as const, label: 'Четверть', icon: BookOpen },
+    { id: 'test' as const, label: 'Тест', icon: Target },
+    { id: 'quality' as const, label: 'Качество', icon: PieChart },
+    { id: 'sou' as const, label: 'СОУ', icon: Users },
+  ];
+
+  return (
+    <div className="min-h-[100dvh] notebook-bg flex flex-col">
+      <header className="bg-purple-700 shadow-md sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-5 py-4">
+          <BackButton onClick={onBack} variant="light" />
+          <h1 className="text-2xl font-bold text-white mt-3 flex items-center gap-2">
+            <Calculator className="w-6 h-6" />
+            Калькуляторы
+          </h1>
+        </div>
+      </header>
+
+      <main className="flex-1 max-w-md mx-auto w-full px-5 py-5 space-y-5 overflow-y-auto">
+        {/* Навигация по калькуляторам */}
+        <div className="grid grid-cols-3 gap-2">
+          {calculators.map((calc) => {
+            const Icon = calc.icon;
+            const active = activeCalculator === calc.id;
+            return (
+              <button
+                key={calc.id}
+                onClick={() => {
+                  setActiveCalculator(calc.id);
+                  triggerHaptic('light');
+                }}
+                className={`flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl min-h-14 transition-all touch-manipulation text-xs font-semibold ${
+                  active
+                    ? 'bg-purple-100 text-purple-800 border-2 border-purple-500'
+                    : 'bg-white text-gray-500 border-2 border-transparent'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-center leading-tight">{calc.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Контент калькуляторов */}
+        <div className="bg-white rounded-2xl shadow-md p-5">
+          {activeCalculator === 'average' && <AverageCalculator />}
+          {activeCalculator === 'final' && <FinalGradeCalculator />}
+          {activeCalculator === 'quarter' && <QuarterCalculator />}
+          {activeCalculator === 'test' && <TestCalculator />}
+          {activeCalculator === 'quality' && <QualityCalculator />}
+          {activeCalculator === 'sou' && <SOUCalculator />}
+        </div>
+
+        {/* FAQ */}
+        <FAQSection />
+
+        <YandexAdBlock />
+      </main>
+    </div>
+  );
+}
+
+// ===== 1. КАЛЬКУЛЯТОР СРЕДНЕГО БАЛЛА =====
+function AverageCalculator() {
+  const [grades, setGrades] = useState([{ value: '', weight: 100 }]);
+
+  const addGrade = () => {
+    setGrades([...grades, { value: '', weight: 100 }]);
+    triggerHaptic('light');
+  };
+  const removeGrade = (index: number) => setGrades(grades.filter((_, i) => i !== index));
+  const updateGrade = (index: number, field: 'value' | 'weight', value: string) => {
+    const newGrades = [...grades];
+    newGrades[index][field] = value;
+    setGrades(newGrades);
+  };
+
+  const calculateAverage = () => {
+    const validGrades = grades.filter(g => g.value && parseFloat(g.value) > 0 && g.weight > 0);
+    if (validGrades.length === 0) return '0.00';
+    const total = validGrades.reduce((sum, g) => sum + (parseFloat(g.value) * g.weight), 0);
+    const totalWeight = validGrades.reduce((sum, g) => sum + g.weight, 0);
+    return (total / totalWeight).toFixed(2);
+  };
+
+  const avg = calculateAverage();
+
+  return (
+    <div>
+      <h2 className="text-lg font-bold text-purple-700 mb-3">Средний балл (с весом)</h2>
+      <p className="text-xs text-gray-600 mb-4">
+        💡 Вес определяет значимость оценки: контрольная = 100%, домашняя = 50%
+      </p>
+
+      <div className="space-y-2 mb-4">
+        {grades.map((grade, index) => (
+          <div key={index} className="flex gap-2 items-center bg-purple-50 p-2 rounded-lg">
+            <span className="text-gray-500 text-xs w-6">#{index + 1}</span>
+            <input
+              type="number" min="1" max="5" step="0.1"
+              value={grade.value}
+              onChange={(e) => updateGrade(index, 'value', e.target.value)}
+              placeholder="Оценка"
+              className="flex-1 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+            />
+            <input
+              type="number" min="0" max="100"
+              value={grade.weight}
+              onChange={(e) => updateGrade(index, 'weight', e.target.value)}
+              placeholder="Вес"
+              className="w-16 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+            />
+            <button onClick={() => removeGrade(index)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
+              <Minus className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={addGrade}
+        className="w-full py-2 border-2 border-dashed border-purple-300 text-purple-600 rounded-xl font-semibold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 text-sm"
+      >
+        <Plus className="w-4 h-4" /> Добавить оценку
+      </button>
+
+      <div className="mt-4 bg-gradient-to-r from-purple-600 to-violet-600 text-white p-4 rounded-xl text-center">
+        <p className="text-sm text-purple-100 mb-1">Средний балл:</p>
+        <p className="text-4xl font-bold">{avg}</p>
+      </div>
+    </div>
+  );
+}
+
+// ===== 2. КАЛЬКУЛЯТОР ИТОГОВОЙ ОЦЕНКИ =====
+function FinalGradeCalculator() {
+  const [currentGrade, setCurrentGrade] = useState('');
+  const [currentWeight, setCurrentWeight] = useState('60');
+  const [finalExam, setFinalExam] = useState('');
+  const [finalWeight, setFinalWeight] = useState('40');
+
+  const calculateFinal = () => {
+    const cg = parseFloat(currentGrade) || 0;
+    const cw = parseFloat(currentWeight) || 0;
+    const fe = parseFloat(finalExam) || 0;
+    const fw = parseFloat(finalWeight) || 0;
+    if (cw + fw === 0) return '0.00';
+    return ((cg * cw + fe * fw) / (cw + fw)).toFixed(2);
+  };
+
+  return (
+    <div>
+      <h2 className="text-lg font-bold text-purple-700 mb-3">Итоговая оценка</h2>
+      <p className="text-xs text-gray-600 mb-4">
+        💡 Рассчитывает итог с учётом веса текущей оценки и экзамена
+      </p>
+
+      <div className="space-y-3">
+        <div className="bg-blue-50 p-3 rounded-xl">
+          <label className="block text-xs font-semibold text-gray-700 mb-1">Текущая оценка:</label>
+          <input
+            type="number" step="0.1" value={currentGrade}
+            onChange={(e) => setCurrentGrade(e.target.value)}
+            placeholder="Например: 4.5"
+            className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          />
+          <input
+            type="number" value={currentWeight}
+            onChange={(e) => setCurrentWeight(e.target.value)}
+            placeholder="Вес (%)"
+            className="w-full mt-2 px-3 py-1.5 border border-blue-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          />
+          <p className="text-xs text-gray-500 mt-1">Обычно 60-80%</p>
+        </div>
+
+        <div className="bg-purple-50 p-3 rounded-xl">
+          <label className="block text-xs font-semibold text-gray-700 mb-1">Экзамен / итоговая:</label>
+          <input
+            type="number" step="0.1" value={finalExam}
+            onChange={(e) => setFinalExam(e.target.value)}
+            placeholder="Например: 5"
+            className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+          />
+          <input
+            type="number" value={finalWeight}
+            onChange={(e) => setFinalWeight(e.target.value)}
+            placeholder="Вес (%)"
+            className="w-full mt-2 px-3 py-1.5 border border-purple-200 rounded-lg text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
+          />
+          <p className="text-xs text-gray-500 mt-1">Обычно 20-40%</p>
+        </div>
+      </div>
+
+      <div className="mt-4 bg-gradient-to-r from-purple-600 to-violet-600 text-white p-4 rounded-xl text-center">
+        <p className="text-sm text-purple-100 mb-1">Итоговая оценка:</p>
+        <p className="text-4xl font-bold">{calculateFinal()}</p>
+      </div>
+    </div>
+  );
+}
+
+// ===== 3. КАЛЬКУЛЯТОР ОЦЕНКИ ЗА ЧЕТВЕРТЬ =====
+function QuarterCalculator() {
+  const [grades, setGrades] = useState([{ value: '' }]);
+  const [desiredGrade, setDesiredGrade] = useState('');
+
+  const addGrade = () => {
+    setGrades([...grades, { value: '' }]);
+    triggerHaptic('light');
+  };
+  const removeGrade = (index: number) => setGrades(grades.filter((_, i) => i !== index));
+
+  const calculate = () => {
+    const validGrades = grades.filter(g => g.value);
+    if (validGrades.length === 0) return { average: '0.00', needed: null };
+    const sum = validGrades.reduce((acc, g) => acc + parseFloat(g.value), 0);
+    const average = sum / validGrades.length;
+    
+    let needed: number | null = null;
+    if (desiredGrade) {
+      const desired = parseFloat(desiredGrade);
+      needed = (desired * (validGrades.length + 1) - sum);
+    }
+    return { average: average.toFixed(2), needed };
+  };
+
+  const result = calculate();
+
+  return (
+    <div>
+      <h2 className="text-lg font-bold text-purple-700 mb-3">Оценка за четверть</h2>
+      <p className="text-xs text-gray-600 mb-4">
+        💡 Покажет, что нужно получить на следующей работе для желаемого балла
+      </p>
+
+      <div className="space-y-2 mb-4">
+        {grades.map((grade, index) => (
+          <div key={index} className="flex gap-2 items-center bg-purple-50 p-2 rounded-lg">
+            <span className="text-gray-500 text-xs w-6">#{index + 1}</span>
+            <input
+              type="number" min="1" max="5" step="0.1"
+              value={grade.value}
+              onChange={(e) => {
+                const newGrades = [...grades];
+                newGrades[index].value = e.target.value;
+                setGrades(newGrades);
+              }}
+              placeholder="Оценка (1-5)"
+              className="flex-1 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+            />
+            <button onClick={() => removeGrade(index)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
+              <Minus className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={addGrade}
+        className="w-full py-2 border-2 border-dashed border-purple-300 text-purple-600 rounded-xl font-semibold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 text-sm mb-4"
+      >
+        <Plus className="w-4 h-4" /> Добавить оценку
+      </button>
+
+      <div className="bg-blue-50 p-3 rounded-xl mb-4">
+        <label className="block text-xs font-semibold text-gray-700 mb-1">Желаемая оценка за четверть:</label>
+        <input
+          type="number" min="1" max="5" step="0.1" value={desiredGrade}
+          onChange={(e) => setDesiredGrade(e.target.value)}
+          placeholder="Например: 4.5"
+          className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-gradient-to-r from-purple-600 to-violet-600 text-white p-3 rounded-xl text-center">
+          <p className="text-xs text-purple-100 mb-1">Текущий балл:</p>
+          <p className="text-2xl font-bold">{result.average}</p>
+        </div>
+        {result.needed !== null && (
+          <div className="bg-gradient-to-r from-green-500 to-teal-600 text-white p-3 rounded-xl text-center">
+            <p className="text-xs text-green-100 mb-1">Нужно получить:</p>
+            <p className="text-2xl font-bold">{result.needed > 0 ? result.needed.toFixed(1) : '✓'}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ===== 4. КАЛЬКУЛЯТОР ОЦЕНКИ ЗА ТЕСТ =====
+function TestCalculator() {
+  const [totalQuestions, setTotalQuestions] = useState('');
+  const [correctAnswers, setCorrectAnswers] = useState('');
+
+  const calculate = () => {
+    if (!totalQuestions || !correctAnswers) return null;
+    const total = parseInt(totalQuestions);
+    const correct = parseInt(correctAnswers);
+    if (total === 0) return null;
+    const percentage = (correct / total) * 100;
+    let grade = 2;
+    if (percentage >= 90) grade = 5;
+    else if (percentage >= 75) grade = 4;
+    else if (percentage >= 60) grade = 3;
+    return { percentage: percentage.toFixed(1), grade, correct, total };
+  };
+
+  const result = calculate();
+
+  return (
+    <div>
+      <h2 className="text-lg font-bold text-purple-700 mb-3">Оценка за тест</h2>
+      <p className="text-xs text-gray-600 mb-4">
+        💡 Шкала: 5 (90-100%), 4 (75-89%), 3 (60-74%), 2 (0-59%)
+      </p>
+
+      <div className="space-y-3">
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1">Всего вопросов:</label>
+          <input
+            type="number" min="1" value={totalQuestions}
+            onChange={(e) => setTotalQuestions(e.target.value)}
+            placeholder="Например: 20"
+            className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1">Правильных ответов:</label>
+          <input
+            type="number" min="0" value={correctAnswers}
+            onChange={(e) => setCorrectAnswers(e.target.value)}
+            placeholder="Например: 16"
+            className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      {result && (
+        <div className="mt-4 space-y-3">
+          <div className="bg-gradient-to-r from-purple-600 to-violet-600 text-white p-4 rounded-xl text-center">
+            <p className="text-sm text-purple-100 mb-1">Оценка:</p>
+            <p className="text-5xl font-bold">{result.grade}</p>
+            <p className="text-lg mt-1">{result.percentage}%</p>
+            <p className="text-xs mt-1">{result.correct} из {result.total}</p>
+          </div>
+          <div className="bg-gray-100 rounded-full h-3">
+            <div
+              className="bg-purple-600 h-3 rounded-full transition-all"
+              style={{ width: `${result.percentage}%` }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===== 5. КАЛЬКУЛЯТОР КАЧЕСТВА ЗНАНИЙ =====
+function QualityCalculator() {
+  const [students, setStudents] = useState([{ grade: '' }]);
+
+  const addStudent = () => {
+    setStudents([...students, { grade: '' }]);
+    triggerHaptic('light');
+  };
+  const removeStudent = (index: number) => setStudents(students.filter((_, i) => i !== index));
+
+  const calculate = () => {
+    const valid = students.filter(s => s.grade && s.grade.toLowerCase() !== 'н/а');
+    if (valid.length === 0) return { quality: '0.0', count: 0, excellent: 0, good: 0 };
+    const excellent = valid.filter(s => parseFloat(s.grade) === 5).length;
+    const good = valid.filter(s => parseFloat(s.grade) === 4).length;
+    const quality = ((excellent + good) / valid.length) * 100;
+    return { quality: quality.toFixed(1), count: valid.length, excellent, good };
+  };
+
+  const result = calculate();
+
+  return (
+    <div>
+      <h2 className="text-lg font-bold text-purple-700 mb-3">Качество знаний</h2>
+      <p className="text-xs text-gray-600 mb-4">
+        💡 Для учителей: процент «4» и «5» от общего числа учащихся
+      </p>
+
+      <div className="space-y-2 mb-4">
+        {students.map((student, index) => (
+          <div key={index} className="flex gap-2 items-center bg-purple-50 p-2 rounded-lg">
+            <span className="text-gray-500 text-xs w-6">#{index + 1}</span>
+            <input
+              type="text" value={student.grade}
+              onChange={(e) => {
+                const newStudents = [...students];
+                newStudents[index].grade = e.target.value;
+                setStudents(newStudents);
+              }}
+              placeholder="1-5 или н/а"
+              className="flex-1 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+            />
+            <button onClick={() => removeStudent(index)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
+              <Minus className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={addStudent}
+        className="w-full py-2 border-2 border-dashed border-purple-300 text-purple-600 rounded-xl font-semibold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 text-sm mb-4"
+      >
+        <Plus className="w-4 h-4" /> Добавить учащегося
+      </button>
+
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-yellow-400 text-white p-3 rounded-xl text-center">
+          <p className="text-xs mb-1">«5»:</p>
+          <p className="text-2xl font-bold">{result.excellent}</p>
+        </div>
+        <div className="bg-blue-500 text-white p-3 rounded-xl text-center">
+          <p className="text-xs mb-1">«4»:</p>
+          <p className="text-2xl font-bold">{result.good}</p>
+        </div>
+        <div className="bg-green-500 text-white p-3 rounded-xl text-center">
+          <p className="text-xs mb-1">Качество:</p>
+          <p className="text-2xl font-bold">{result.quality}%</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===== 6. КАЛЬКУЛЯТОР СОУ =====
+function SOUCalculator() {
+  const [students, setStudents] = useState([{ grade: '' }]);
+
+  const addStudent = () => {
+    setStudents([...students, { grade: '' }]);
+    triggerHaptic('light');
+  };
+  const removeStudent = (index: number) => setStudents(students.filter((_, i) => i !== index));
+
+  const calculate = () => {
+    const valid = students.filter(s => s.grade && s.grade.toLowerCase() !== 'н/а');
+    if (valid.length === 0) return { sou: '0.0', count: 0 };
+    const passed = valid.filter(s => {
+      const g = parseFloat(s.grade);
+      return g >= 3 && g <= 5;
+    }).length;
+    const sou = (passed / valid.length) * 100;
+    return { sou: sou.toFixed(1), count: valid.length };
+  };
+
+  const result = calculate();
+
+  return (
+    <div>
+      <h2 className="text-lg font-bold text-purple-700 mb-3">СОУ (степень обученности)</h2>
+      <p className="text-xs text-gray-600 mb-4">
+        💡 Доля учащихся с оценками 3, 4, 5 от общего числа
+      </p>
+
+      <div className="space-y-2 mb-4">
+        {students.map((student, index) => (
+          <div key={index} className="flex gap-2 items-center bg-purple-50 p-2 rounded-lg">
+            <span className="text-gray-500 text-xs w-6">#{index + 1}</span>
+            <input
+              type="text" value={student.grade}
+              onChange={(e) => {
+                const newStudents = [...students];
+                newStudents[index].grade = e.target.value;
+                setStudents(newStudents);
+              }}
+              placeholder="1-5 или н/а"
+              className="flex-1 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+            />
+            <button onClick={() => removeStudent(index)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
+              <Minus className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={addStudent}
+        className="w-full py-2 border-2 border-dashed border-purple-300 text-purple-600 rounded-xl font-semibold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 text-sm mb-4"
+      >
+        <Plus className="w-4 h-4" /> Добавить учащегося
+      </button>
+
+      <div className="bg-gradient-to-r from-purple-600 to-violet-600 text-white p-4 rounded-xl text-center">
+        <p className="text-sm text-purple-100 mb-1">СОУ:</p>
+        <p className="text-4xl font-bold">{result.sou}%</p>
+        <p className="text-xs mt-1">из {result.count} учащихся</p>
+      </div>
+    </div>
+  );
+}
+
+// ===== FAQ =====
+function FAQSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const faqs = [
+    {
+      q: 'Как считается средний балл?',
+      a: 'Средний балл = сумма (оценка × вес) ÷ сумма весов. Пустые оценки не учитываются.',
+    },
+    {
+      q: 'Что такое вес оценки?',
+      a: 'Вес показывает значимость: контрольная = 100%, домашняя = 50%. Чем выше вес, тем больше влияние на итог.',
+    },
+    {
+      q: 'Что такое СОУ?',
+      a: 'СОУ (степень обученности) — доля учащихся с оценками 3, 4, 5 от общего числа. Показывает, сколько учеников усвоили программу.',
+    },
+    {
+      q: 'Как считается качество знаний?',
+      a: 'Качество знаний = (кол-во «4» + «5») ÷ (общее кол-во учащихся) × 100%. Оценки «н/а» не учитываются.',
+    },
+    {
+      q: 'Почему результат отличается от журнала?',
+      a: 'Школы используют разные правила оценивания. Калькулятор даёт ориентировочное значение по стандартной формуле.',
+    },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl shadow-md p-5">
+      <h2 className="text-lg font-bold text-purple-700 mb-3 flex items-center gap-2">
+        <HelpCircle className="w-5 h-5" />
+        Частые вопросы
+      </h2>
+      <div className="space-y-2">
+        {faqs.map((faq, index) => (
+          <div key={index} className="border border-purple-100 rounded-xl overflow-hidden">
+            <button
+              onClick={() => setOpenIndex(openIndex === index ? null : index)}
+              className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-purple-50 transition-colors"
+            >
+              <span className="text-sm font-semibold text-gray-800">{faq.q}</span>
+              <span className={`transform transition-transform text-purple-600 ${openIndex === index ? 'rotate-180' : ''}`}>▼</span>
+            </button>
+            {openIndex === index && (
+              <div className="px-4 py-3 bg-purple-50 border-t border-purple-100">
+                <p className="text-sm text-gray-700">{faq.a}</p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
