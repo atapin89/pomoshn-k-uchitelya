@@ -83,8 +83,8 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           Помощник учителя
         </h1>
         
-        {/* 2. Новый подзаголовок в одну строку, уменьшенный шрифт, минимальные отступы (my-1) */}
-        <p className="text-xs sm:text-sm text-gray-500 text-center whitespace-nowrap my-1">
+        {/* 2. Увеличенный шрифт подзаголовка, но в одну строку */}
+        <p className="text-sm sm:text-base text-gray-500 text-center whitespace-nowrap my-1">
           Простые инструменты для сложных задач
         </p>
       </header>
