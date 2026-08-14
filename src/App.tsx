@@ -13,10 +13,11 @@ import FlashcardsScreen from '@/components/FlashcardsScreen';
 import StudyScreen from '@/components/StudyScreen';
 import QuizScreen from '@/components/QuizScreen';
 import WordSearchScreen from '@/components/WordSearchScreen';
-import ManualScreen from '@/components/ManualScreen'; // <-- ДОБАВЛЕН ИМПОРТ РУКОВОДСТВА
+import ManualScreen from '@/components/ManualScreen';
+import CalculatorsScreen from '@/components/CalculatorsScreen'; // <-- 1. ДОБАВЛЕН ИМПОРТ КАЛЬКУЛЯТОРОВ
 
-// <-- ДОБАВЛЕН 'manual' в типы маршрутов
-type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual';
+// <-- 2. ДОБАВЛЕН 'calculators' в типы маршрутов
+type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators';
 
 export default function App() {
   const [route, setRoute] = useState<Route>('home');
@@ -132,12 +133,17 @@ export default function App() {
     return <WordSearchScreen onBack={() => setRoute('home')} />;
   }
 
-  // 8. Руководство по использованию <-- ДОБАВЛЕН НОВЫЙ МАРШРУТ
+  // 8. Руководство по использованию
   if (route === 'manual') {
     return <ManualScreen onBack={() => setRoute('home')} />;
   }
 
-  // 9. Активный таймер урока
+  // 9. Раздел с калькуляторами <-- 3. ДОБАВЛЕН НОВЫЙ МАРШРУТ
+  if (route === 'calculators') {
+    return <CalculatorsScreen onBack={() => setRoute('home')} />;
+  }
+
+  // 10. Активный таймер урока
   if (activeTemplate) {
     return (
       <ActiveTimer
@@ -148,7 +154,7 @@ export default function App() {
     );
   }
 
-  // 10. Список шаблонов таймера (по умолчанию)
+  // 11. Список шаблонов таймера (по умолчанию)
   return (
     <>
       <TemplateList
