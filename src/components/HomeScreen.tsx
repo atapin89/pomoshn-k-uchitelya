@@ -53,7 +53,8 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
 
   return (
     <div className="min-h-[100dvh] notebook-bg flex flex-col">
-      <header className="max-w-md mx-auto w-full px-5 pt-12 pb-6">
+      {/* 4. Минимальный отступ сверху (pt-3 вместо pt-12) */}
+      <header className="max-w-md mx-auto w-full px-5 pt-3 pb-4">
         {/* Верхняя строка: иконка руководства слева, подпись автора справа */}
         <div className="flex items-center justify-between mb-1">
           <button
@@ -77,8 +78,15 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           </p>
         </div>
         
-        <h1 className="text-4xl font-extrabold text-purple-700 text-center">Помощник учителя</h1>
-        <p className="text-gray-500 mt-2 text-center">Простые инструменты на каждый день</p>
+        {/* 1. Заголовок в одну строку (whitespace-nowrap и адаптивный размер шрифта) */}
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-purple-700 text-center whitespace-nowrap">
+          Помощник учителя
+        </h1>
+        
+        {/* 2. Новый подзаголовок в одну строку, уменьшенный шрифт, минимальные отступы (my-1) */}
+        <p className="text-xs sm:text-sm text-gray-500 text-center whitespace-nowrap my-1">
+          Простые инструменты для сложных задач
+        </p>
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
@@ -112,8 +120,8 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           })}
         </div>
 
-        {/* Ссылка на сообщество (выровнена по левому краю) */}
-        <div className="mt-6 text-left">
+        {/* 3. Ссылка на сообщество с минимальными отступами сверху и снизу (mt-2 mb-1) */}
+        <div className="mt-2 mb-1 text-left">
           <a
             href="https://max.ru/channel_topteach"
             target="_blank"
