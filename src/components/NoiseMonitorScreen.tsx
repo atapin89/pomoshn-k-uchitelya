@@ -215,8 +215,6 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
 
       setActive(true);
     } catch (e: any) {
-      // ШАГ 5: ДИАГНОСТИКА
-      // Эта информация соберется автоматически при ошибке и поможет найти причину
       const debugInfo = [
         `mediaDevices: ${!!navigator.mediaDevices}`,
         `getUserMedia: ${!!navigator.mediaDevices?.getUserMedia}`,
@@ -232,7 +230,6 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
         userMessage = 'Микрофон не найден на устройстве.';
       }
       
-      // Показываем пользователю понятное сообщение + технические данные для отправки разработчику
       setError(`${userMessage}\n\n[Диагностика]:\n${debugInfo.join('\n')}`);
     }
   };
@@ -387,17 +384,23 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="min-h-[100dvh] notebook-bg flex flex-col">
+      {/* НОВАЯ КОМПАКТНАЯ ШАПКА */}
       <header className="bg-purple-700 shadow-md sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-5 py-4">
-          <BackButton onClick={onBack} variant="light" />
-          <div className="flex items-center gap-3 mt-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
-              <Volume2 className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white leading-tight">Контроль шума</h1>
-              <p className="text-sm text-white/70">Шумометр для класса</p>
-            </div>
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+          {/* Кнопка назад (не сжимается) */}
+          <div className="shrink-0">
+            <BackButton onClick={onBack} variant="light" />
+          </div>
+          
+          {/* Заголовок и описание (занимают все свободное место, текст обрезается если не влезает) */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <h1 className="text-lg font-bold text-white leading-tight truncate">Контроль шума</h1>
+            <p className="text-xs text-purple-200 leading-tight">Шумометр для класса</p>
+          </div>
+          
+          {/* Иконка раздела справа (не сжимается) */}
+          <div className="shrink-0 w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
+            <Volume2 className="w-5 h-5 text-white" />
           </div>
         </div>
       </header>
@@ -425,7 +428,6 @@ export default function NoiseMonitorScreen({ onBack }: { onBack: () => void }) {
             <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
               <MicOff className="w-10 h-10 text-red-500" />
             </div>
-            {/* whitespace-pre-line сохраняет переносы строк для красивого отображения диагностики */}
             <p className="text-sm text-red-600 text-center max-w-xs whitespace-pre-line">{error}</p>
             <button
               onClick={startMic}
