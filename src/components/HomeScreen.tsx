@@ -78,11 +78,11 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
         </div>
         
         <h1 className="text-4xl font-extrabold text-purple-700 text-center">Помощник учителя</h1>
-        <p className="text-gray-500 mt-2 text-center">Простые инструменты для сложных задач</p>
+        <p className="text-gray-500 mt-2 text-center">Простые инструменты на каждый день</p>
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
-        {/* Сетка разделов (теперь идеально 2×3) */}
+        {/* Сетка разделов (2×3) */}
         <div className="grid grid-cols-2 gap-4">
           {sections.map((section) => {
             const Icon = section.icon;
@@ -111,9 +111,21 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
             );
           })}
         </div>
-      </main>
 
-      <YandexAdBlock />
+        {/* Ссылка на сообщество (выровнена по левому краю) */}
+        <div className="mt-6 text-left">
+          <a
+            href="https://max.ru/channel_topteach"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-gray-600 hover:text-purple-600 font-medium transition-colors underline decoration-dotted underline-offset-4"
+          >
+            Наше сообщество: задавай вопросы, узнавай новости
+          </a>
+        </div>
+
+        <YandexAdBlock />
+      </main>
 
       <HelpModal
         isOpen={activeHelpModal !== null}
