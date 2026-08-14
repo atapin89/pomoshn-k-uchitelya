@@ -78,7 +78,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
         </div>
         
         <h1 className="text-4xl font-extrabold text-purple-700 text-center">Помощник учителя</h1>
-        <p className="text-gray-500 mt-2 text-center">Простые инструменты на каждый день</p>
+        <p className="text-gray-500 mt-2 text-center">Простые инструменты для сложных задач</p>
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
