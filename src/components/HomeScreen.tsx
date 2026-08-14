@@ -120,7 +120,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
             rel="noopener noreferrer"
             className="text-sm text-gray-600 hover:text-purple-600 font-medium transition-colors underline decoration-dotted underline-offset-4"
           >
-            Наше сообщество: задавай вопросы, узнавай новости
+            Наше сообщество: вопросы и новости здесь
           </a>
         </div>
 
