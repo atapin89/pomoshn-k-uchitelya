@@ -20,21 +20,15 @@ export default function CalculatorsScreen({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="min-h-[100dvh] notebook-bg flex flex-col">
-      {/* НОВАЯ КОМПАКТНАЯ ШАПКА */}
       <header className="bg-purple-700 shadow-md sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
-          {/* Кнопка назад (не сжимается) */}
           <div className="shrink-0">
             <BackButton onClick={onBack} variant="light" />
           </div>
-          
-          {/* Заголовок и описание (занимают все свободное место, текст обрезается если не влезает) */}
           <div className="flex-1 min-w-0 flex flex-col justify-center">
             <h1 className="text-lg font-bold text-white leading-tight truncate">Калькуляторы</h1>
             <p className="text-xs text-purple-200 leading-tight">Баллы, СОУ, тесты</p>
           </div>
-          
-          {/* Иконка раздела справа (не сжимается) */}
           <div className="shrink-0 w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
             <Calculator className="w-5 h-5 text-white" />
           </div>
@@ -42,7 +36,6 @@ export default function CalculatorsScreen({ onBack }: { onBack: () => void }) {
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full px-5 py-5 space-y-5 overflow-y-auto">
-        {/* Навигация по калькуляторам */}
         <div className="grid grid-cols-3 gap-2">
           {calculators.map((calc) => {
             const Icon = calc.icon;
@@ -67,7 +60,6 @@ export default function CalculatorsScreen({ onBack }: { onBack: () => void }) {
           })}
         </div>
 
-        {/* Контент калькуляторов */}
         <div className="bg-white rounded-2xl shadow-md p-5">
           {activeCalculator === 'average' && <AverageCalculator />}
           {activeCalculator === 'final' && <FinalGradeCalculator />}
@@ -77,9 +69,7 @@ export default function CalculatorsScreen({ onBack }: { onBack: () => void }) {
           {activeCalculator === 'sou' && <SOUCalculator />}
         </div>
 
-        {/* FAQ */}
         <FAQSection />
-
         <YandexAdBlock />
       </main>
     </div>
@@ -114,10 +104,7 @@ function AverageCalculator() {
   return (
     <div>
       <h2 className="text-lg font-bold text-purple-700 mb-3">Средний балл (с весом)</h2>
-      <p className="text-xs text-gray-600 mb-4">
-        💡 Вес определяет значимость оценки: контрольная = 100%, домашняя = 50%
-      </p>
-
+      <p className="text-xs text-gray-600 mb-4">💡 Вес определяет значимость оценки: контрольная = 100%, домашняя = 50%</p>
       <div className="space-y-2 mb-4">
         {grades.map((grade, index) => (
           <div key={index} className="flex gap-2 items-center bg-purple-50 p-2 rounded-lg">
@@ -142,14 +129,12 @@ function AverageCalculator() {
           </div>
         ))}
       </div>
-
       <button
         onClick={addGrade}
         className="w-full py-2 border-2 border-dashed border-purple-300 text-purple-600 rounded-xl font-semibold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 text-sm"
       >
         <Plus className="w-4 h-4" /> Добавить оценку
       </button>
-
       <div className="mt-4 bg-gradient-to-r from-purple-600 to-violet-600 text-white p-4 rounded-xl text-center">
         <p className="text-sm text-purple-100 mb-1">Средний балл:</p>
         <p className="text-4xl font-bold">{avg}</p>
@@ -177,10 +162,7 @@ function FinalGradeCalculator() {
   return (
     <div>
       <h2 className="text-lg font-bold text-purple-700 mb-3">Итоговая оценка</h2>
-      <p className="text-xs text-gray-600 mb-4">
-        💡 Рассчитывает итог с учётом веса текущей оценки и экзамена
-      </p>
-
+      <p className="text-xs text-gray-600 mb-4">💡 Рассчитывает итог с учётом веса текущей оценки и экзамена</p>
       <div className="space-y-3">
         <div className="bg-blue-50 p-3 rounded-xl">
           <label className="block text-xs font-semibold text-gray-700 mb-1">Текущая оценка:</label>
@@ -198,7 +180,6 @@ function FinalGradeCalculator() {
           />
           <p className="text-xs text-gray-500 mt-1">Обычно 60-80%</p>
         </div>
-
         <div className="bg-purple-50 p-3 rounded-xl">
           <label className="block text-xs font-semibold text-gray-700 mb-1">Экзамен / итоговая:</label>
           <input
@@ -216,7 +197,6 @@ function FinalGradeCalculator() {
           <p className="text-xs text-gray-500 mt-1">Обычно 20-40%</p>
         </div>
       </div>
-
       <div className="mt-4 bg-gradient-to-r from-purple-600 to-violet-600 text-white p-4 rounded-xl text-center">
         <p className="text-sm text-purple-100 mb-1">Итоговая оценка:</p>
         <p className="text-4xl font-bold">{calculateFinal()}</p>
@@ -255,10 +235,7 @@ function QuarterCalculator() {
   return (
     <div>
       <h2 className="text-lg font-bold text-purple-700 mb-3">Оценка за четверть</h2>
-      <p className="text-xs text-gray-600 mb-4">
-        💡 Покажет, что нужно получить на следующей работе для желаемого балла
-      </p>
-
+      <p className="text-xs text-gray-600 mb-4">💡 Покажет, что нужно получить на следующей работе для желаемого балла</p>
       <div className="space-y-2 mb-4">
         {grades.map((grade, index) => (
           <div key={index} className="flex gap-2 items-center bg-purple-50 p-2 rounded-lg">
@@ -280,14 +257,12 @@ function QuarterCalculator() {
           </div>
         ))}
       </div>
-
       <button
         onClick={addGrade}
         className="w-full py-2 border-2 border-dashed border-purple-300 text-purple-600 rounded-xl font-semibold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 text-sm mb-4"
       >
         <Plus className="w-4 h-4" /> Добавить оценку
       </button>
-
       <div className="bg-blue-50 p-3 rounded-xl mb-4">
         <label className="block text-xs font-semibold text-gray-700 mb-1">Желаемая оценка за четверть:</label>
         <input
@@ -297,7 +272,6 @@ function QuarterCalculator() {
           className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
         />
       </div>
-
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-gradient-to-r from-purple-600 to-violet-600 text-white p-3 rounded-xl text-center">
           <p className="text-xs text-purple-100 mb-1">Текущий балл:</p>
@@ -337,10 +311,7 @@ function TestCalculator() {
   return (
     <div>
       <h2 className="text-lg font-bold text-purple-700 mb-3">Оценка за тест</h2>
-      <p className="text-xs text-gray-600 mb-4">
-        💡 Шкала: 5 (90-100%), 4 (75-89%), 3 (60-74%), 2 (0-59%)
-      </p>
-
+      <p className="text-xs text-gray-600 mb-4">💡 Шкала: 5 (90-100%), 4 (75-89%), 3 (60-74%), 2 (0-59%)</p>
       <div className="space-y-3">
         <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1">Всего вопросов:</label>
@@ -361,7 +332,6 @@ function TestCalculator() {
           />
         </div>
       </div>
-
       {result && (
         <div className="mt-4 space-y-3">
           <div className="bg-gradient-to-r from-purple-600 to-violet-600 text-white p-4 rounded-xl text-center">
@@ -371,10 +341,7 @@ function TestCalculator() {
             <p className="text-xs mt-1">{result.correct} из {result.total}</p>
           </div>
           <div className="bg-gray-100 rounded-full h-3">
-            <div
-              className="bg-purple-600 h-3 rounded-full transition-all"
-              style={{ width: `${result.percentage}%` }}
-            />
+            <div className="bg-purple-600 h-3 rounded-full transition-all" style={{ width: `${result.percentage}%` }} />
           </div>
         </div>
       )}
@@ -382,142 +349,105 @@ function TestCalculator() {
   );
 }
 
-// ===== 5. КАЛЬКУЛЯТОР КАЧЕСТВА ЗНАНИЙ =====
+// ===== 5. КАЛЬКУЛЯТОР КАЧЕСТВА ЗНАНИЙ (ОБНОВЛЕННЫЙ) =====
 function QualityCalculator() {
-  const [students, setStudents] = useState([{ grade: '' }]);
+  const [counts, setCounts] = useState({ '5': 0, '4': 0, '3': 0, '2': 0 });
 
-  const addStudent = () => {
-    setStudents([...students, { grade: '' }]);
+  const handleChange = (grade: keyof typeof counts, value: string) => {
+    const num = parseInt(value) || 0;
+    setCounts(prev => ({ ...prev, [grade]: Math.max(0, num) }));
     triggerHaptic('light');
   };
-  const removeStudent = (index: number) => setStudents(students.filter((_, i) => i !== index));
 
-  const calculate = () => {
-    const valid = students.filter(s => s.grade && s.grade.toLowerCase() !== 'н/а');
-    if (valid.length === 0) return { quality: '0.0', count: 0, excellent: 0, good: 0 };
-    const excellent = valid.filter(s => parseFloat(s.grade) === 5).length;
-    const good = valid.filter(s => parseFloat(s.grade) === 4).length;
-    const quality = ((excellent + good) / valid.length) * 100;
-    return { quality: quality.toFixed(1), count: valid.length, excellent, good };
-  };
-
-  const result = calculate();
+  const total = counts['5'] + counts['4'] + counts['3'] + counts['2'];
+  const quality = total > 0 ? (((counts['5'] + counts['4']) / total) * 100).toFixed(1) : '0.0';
 
   return (
     <div>
       <h2 className="text-lg font-bold text-purple-700 mb-3">Качество знаний</h2>
-      <p className="text-xs text-gray-600 mb-4">
-        💡 Для учителей: процент «4» и «5» от общего числа учащихся
-      </p>
+      <p className="text-xs text-gray-600 mb-4">💡 Укажите количество учащихся, получивших каждую оценку</p>
 
-      <div className="space-y-2 mb-4">
-        {students.map((student, index) => (
-          <div key={index} className="flex gap-2 items-center bg-purple-50 p-2 rounded-lg">
-            <span className="text-gray-500 text-xs w-6">#{index + 1}</span>
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        {[5, 4, 3, 2].map((grade) => (
+          <div key={grade} className="text-center">
+            <label className="block text-xs font-semibold text-gray-600 mb-1">«{grade}»</label>
             <input
-              type="text" value={student.grade}
-              onChange={(e) => {
-                const newStudents = [...students];
-                newStudents[index].grade = e.target.value;
-                setStudents(newStudents);
-              }}
-              placeholder="1-5 или н/а"
-              className="flex-1 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+              type="number"
+              min="0"
+              value={counts[grade.toString() as keyof typeof counts]}
+              onChange={(e) => handleChange(grade.toString() as keyof typeof counts, e.target.value)}
+              className="w-full px-2 py-3 border border-purple-200 rounded-xl text-center text-lg font-bold text-purple-700 focus:ring-2 focus:ring-purple-400 focus:outline-none"
             />
-            <button onClick={() => removeStudent(index)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
-              <Minus className="w-4 h-4" />
-            </button>
           </div>
         ))}
       </div>
 
-      <button
-        onClick={addStudent}
-        className="w-full py-2 border-2 border-dashed border-purple-300 text-purple-600 rounded-xl font-semibold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 text-sm mb-4"
-      >
-        <Plus className="w-4 h-4" /> Добавить учащегося
-      </button>
+      <div className="bg-purple-50 rounded-xl p-4 mb-4">
+        <p className="text-sm text-gray-600 text-center mb-1">Всего учащихся в списке:</p>
+        <p className="text-2xl font-bold text-purple-700 text-center">{total}</p>
+      </div>
 
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-yellow-400 text-white p-3 rounded-xl text-center">
-          <p className="text-xs mb-1">«5»:</p>
-          <p className="text-2xl font-bold">{result.excellent}</p>
+          <p className="text-xs mb-1 font-medium">«5»:</p>
+          <p className="text-2xl font-bold">{counts['5']}</p>
         </div>
         <div className="bg-blue-500 text-white p-3 rounded-xl text-center">
-          <p className="text-xs mb-1">«4»:</p>
-          <p className="text-2xl font-bold">{result.good}</p>
+          <p className="text-xs mb-1 font-medium">«4»:</p>
+          <p className="text-2xl font-bold">{counts['4']}</p>
         </div>
         <div className="bg-green-500 text-white p-3 rounded-xl text-center">
-          <p className="text-xs mb-1">Качество:</p>
-          <p className="text-2xl font-bold">{result.quality}%</p>
+          <p className="text-xs mb-1 font-medium">Качество:</p>
+          <p className="text-2xl font-bold">{quality}%</p>
         </div>
       </div>
     </div>
   );
 }
 
-// ===== 6. КАЛЬКУЛЯТОР СОУ =====
+// ===== 6. КАЛЬКУЛЯТОР СОУ (ОБНОВЛЕННЫЙ) =====
 function SOUCalculator() {
-  const [students, setStudents] = useState([{ grade: '' }]);
+  const [counts, setCounts] = useState({ '5': 0, '4': 0, '3': 0, '2': 0 });
 
-  const addStudent = () => {
-    setStudents([...students, { grade: '' }]);
+  const handleChange = (grade: keyof typeof counts, value: string) => {
+    const num = parseInt(value) || 0;
+    setCounts(prev => ({ ...prev, [grade]: Math.max(0, num) }));
     triggerHaptic('light');
   };
-  const removeStudent = (index: number) => setStudents(students.filter((_, i) => i !== index));
 
-  const calculate = () => {
-    const valid = students.filter(s => s.grade && s.grade.toLowerCase() !== 'н/а');
-    if (valid.length === 0) return { sou: '0.0', count: 0 };
-    const passed = valid.filter(s => {
-      const g = parseFloat(s.grade);
-      return g >= 3 && g <= 5;
-    }).length;
-    const sou = (passed / valid.length) * 100;
-    return { sou: sou.toFixed(1), count: valid.length };
-  };
-
-  const result = calculate();
+  const total = counts['5'] + counts['4'] + counts['3'] + counts['2'];
+  const passed = counts['5'] + counts['4'] + counts['3'];
+  const sou = total > 0 ? ((passed / total) * 100).toFixed(1) : '0.0';
 
   return (
     <div>
       <h2 className="text-lg font-bold text-purple-700 mb-3">СОУ (степень обученности)</h2>
-      <p className="text-xs text-gray-600 mb-4">
-        💡 Доля учащихся с оценками 3, 4, 5 от общего числа
-      </p>
+      <p className="text-xs text-gray-600 mb-4">💡 Укажите количество учащихся, получивших каждую оценку</p>
 
-      <div className="space-y-2 mb-4">
-        {students.map((student, index) => (
-          <div key={index} className="flex gap-2 items-center bg-purple-50 p-2 rounded-lg">
-            <span className="text-gray-500 text-xs w-6">#{index + 1}</span>
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        {[5, 4, 3, 2].map((grade) => (
+          <div key={grade} className="text-center">
+            <label className="block text-xs font-semibold text-gray-600 mb-1">«{grade}»</label>
             <input
-              type="text" value={student.grade}
-              onChange={(e) => {
-                const newStudents = [...students];
-                newStudents[index].grade = e.target.value;
-                setStudents(newStudents);
-              }}
-              placeholder="1-5 или н/а"
-              className="flex-1 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 focus:outline-none"
+              type="number"
+              min="0"
+              value={counts[grade.toString() as keyof typeof counts]}
+              onChange={(e) => handleChange(grade.toString() as keyof typeof counts, e.target.value)}
+              className="w-full px-2 py-3 border border-purple-200 rounded-xl text-center text-lg font-bold text-purple-700 focus:ring-2 focus:ring-purple-400 focus:outline-none"
             />
-            <button onClick={() => removeStudent(index)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
-              <Minus className="w-4 h-4" />
-            </button>
           </div>
         ))}
       </div>
 
-      <button
-        onClick={addStudent}
-        className="w-full py-2 border-2 border-dashed border-purple-300 text-purple-600 rounded-xl font-semibold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 text-sm mb-4"
-      >
-        <Plus className="w-4 h-4" /> Добавить учащегося
-      </button>
+      <div className="bg-purple-50 rounded-xl p-4 mb-4">
+        <p className="text-sm text-gray-600 text-center mb-1">Всего учащихся в списке:</p>
+        <p className="text-2xl font-bold text-purple-700 text-center">{total}</p>
+      </div>
 
-      <div className="bg-gradient-to-r from-purple-600 to-violet-600 text-white p-4 rounded-xl text-center">
-        <p className="text-sm text-purple-100 mb-1">СОУ:</p>
-        <p className="text-4xl font-bold">{result.sou}%</p>
-        <p className="text-xs mt-1">из {result.count} учащихся</p>
+      <div className="bg-gradient-to-r from-purple-600 to-violet-600 text-white p-5 rounded-xl text-center">
+        <p className="text-sm text-purple-100 mb-1">Усвоили программу (3, 4, 5): {passed} чел.</p>
+        <p className="text-sm text-purple-100 mb-2">СОУ (степень обученности):</p>
+        <p className="text-5xl font-bold">{sou}%</p>
       </div>
     </div>
   );
@@ -542,7 +472,7 @@ function FAQSection() {
     },
     {
       q: 'Как считается качество знаний?',
-      a: 'Качество знаний = (кол-во «4» + «5») ÷ (общее кол-во учащихся) × 100%. Оценки «н/а» не учитываются.',
+      a: 'Качество знаний = (кол-во «4» + «5») ÷ (общее кол-во учащихся) × 100%.',
     },
     {
       q: 'Почему результат отличается от журнала?',
