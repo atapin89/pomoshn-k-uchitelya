@@ -16,37 +16,37 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
     {
       id: 'timer',
       title: 'Таймер урока',
-      description: 'Управляй временем',
+      description: 'Шаблоны и этапы',
       icon: Clock,
     },
     {
       id: 'generator',
       title: 'Жеребьёвка',
-      description: 'Выбор и группы',
+      description: 'Случайный выбор',
       icon: Dices,
     },
     {
       id: 'noise',
       title: 'Контроль шума',
-      description: 'Индикатор тишины',
+      description: 'Шумометр',
       icon: Volume2,
     },
     {
       id: 'flashcards',
       title: 'Флэш-карточки',
-      description: 'Запоминание терминов',
+      description: 'Колоды и изучение',
       icon: Layers,
     },
     {
       id: 'wordsearch',
       title: 'Филворды',
-      description: 'Головоломки для печати',
+      description: 'Поиск слов',
       icon: Grid3x3,
     },
     {
       id: 'calculators',
       title: 'Калькуляторы',
-      description: 'Оценки и статистика',
+      description: 'Баллы, СОУ, тесты',
       icon: Calculator,
     },
   ];
