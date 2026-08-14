@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen } from 'lucide-react';
+// 1. ДОБАВЛЕНА ИКОНКА Calculator
+import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator } from 'lucide-react';
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
 
 interface HomeScreenProps {
-  onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual') => void;
+  // 2. ДОБАВЛЕН 'calculators' в типы маршрутов
+  onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators') => void;
 }
 
 export default function HomeScreen({ onNavigate }: HomeScreenProps) {
@@ -43,6 +45,13 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
       description: 'Поиск слов',
       icon: Grid3x3,
     },
+    // 3. ДОБАВЛЕН НОВЫЙ РАЗДЕЛ В МАССИВ (он займет 6-ю ячейку сетки)
+    {
+      id: 'calculators',
+      title: 'Калькуляторы',
+      description: 'Баллы, СОУ, тесты',
+      icon: Calculator,
+    },
   ];
 
   return (
@@ -76,7 +85,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
-        {/* Сетка разделов */}
+        {/* Сетка разделов (теперь идеально 2×3) */}
         <div className="grid grid-cols-2 gap-4">
           {sections.map((section) => {
             const Icon = section.icon;
@@ -104,11 +113,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
               </div>
             );
           })}
-          
-          {/* Пустая ячейка для будущего раздела */}
-          <div className="rounded-2xl border-2 border-dashed border-purple-200 min-h-[140px] flex items-center justify-center bg-purple-50/50">
-            <p className="text-purple-400 text-sm text-center px-2 font-medium">Новый раздел скоро</p>
-          </div>
+          {/* Заглушка "Новый раздел скоро" удалена, так как сетка теперь заполнена */}
         </div>
       </main>
 
