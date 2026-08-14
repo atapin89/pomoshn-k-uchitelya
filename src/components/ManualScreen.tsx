@@ -1,25 +1,19 @@
-import { Clock, Dices, Volume2, Layers, Grid3x3, BookOpen, Lightbulb } from 'lucide-react';
+import { Clock, Dices, Volume2, Layers, Grid3x3, BookOpen, Lightbulb, Calculator } from 'lucide-react';
 import BackButton from './BackButton';
 import YandexAdBlock from './YandexAdBlock';
 
 export default function ManualScreen({ onBack }: { onBack: () => void }) {
   return (
     <div className="min-h-[100dvh] bg-gray-50 flex flex-col">
-      {/* НОВАЯ КОМПАКТНАЯ ШАПКА */}
       <header className="bg-purple-700 shadow-md sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
-          {/* Кнопка назад (не сжимается) */}
           <div className="shrink-0">
             <BackButton onClick={onBack} variant="light" />
           </div>
-          
-          {/* Заголовок и описание (занимают все свободное место, текст обрезается если не влезает) */}
           <div className="flex-1 min-w-0 flex flex-col justify-center">
             <h1 className="text-lg font-bold text-white leading-tight truncate">Руководство</h1>
             <p className="text-xs text-purple-200 leading-tight">Как пользоваться приложением</p>
           </div>
-          
-          {/* Иконка раздела справа (не сжимается) */}
           <div className="shrink-0 w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
             <BookOpen className="w-5 h-5 text-white" />
           </div>
@@ -47,7 +41,7 @@ export default function ManualScreen({ onBack }: { onBack: () => void }) {
           <p className="text-sm text-gray-600 mb-3">Визуальный контроль времени и управление темпом занятия.</p>
           <ul className="list-disc list-inside text-sm text-gray-700 space-y-1 mb-3">
             <li>Готовые шаблоны (стандартный урок, контрольная, пятиминутка).</li>
-            <li>Цветовая индикация: 🟢 Зеленый → 🟠 Оранжевый → 🔴 Красный.</li>
+            <li>Цветовая индикация: зеленый → оранжевый → красный.</li>
             <li>Тактильная вибрация при смене этапа.</li>
           </ul>
           <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
@@ -133,6 +127,28 @@ export default function ManualScreen({ onBack }: { onBack: () => void }) {
               <Lightbulb className="w-4 h-4" /> Сценарий:
             </p>
             <p className="text-xs text-purple-700">Идеальный «заполнитель» на последние 7-10 минут урока. Сгенерируйте филворд по новой теме и отправьте скриншот в учебный чат.</p>
+          </div>
+        </section>
+
+        {/* Калькуляторы (НОВЫЙ РАЗДЕЛ) */}
+        <section className="bg-white rounded-2xl shadow-sm p-5 border border-purple-100">
+          <h2 className="text-lg font-bold text-purple-700 mb-3 flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-purple-500" /> 6. Калькуляторы
+          </h2>
+          <p className="text-sm text-gray-600 mb-3">Набор из 6 инструментов для точных расчетов успеваемости и быстрой подготовки отчетов.</p>
+          <ul className="list-disc list-inside text-sm text-gray-700 space-y-1 mb-3">
+            <li><strong>Средний балл:</strong> расчет с учетом веса оценок (контрольная = 100%, домашняя = 50%).</li>
+            <li><strong>Итоговая оценка:</strong> расчет финальной оценки на основе текущей успеваемости и экзамена.</li>
+            <li><strong>Оценка за четверть:</strong> показывает, какую оценку нужно получить на следующей работе для желаемого среднего балла.</li>
+            <li><strong>Оценка за тест:</strong> переводит количество правильных ответов в оценку по стандартной шкале.</li>
+            <li><strong>Качество знаний (для учителей):</strong> считает процент «4» и «5» от общего числа учащихся.</li>
+            <li><strong>СОУ (для учителей):</strong> показывает долю учащихся, усвоивших программу (оценки 3, 4, 5).</li>
+          </ul>
+          <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
+            <p className="text-xs font-semibold text-purple-800 flex items-center gap-1 mb-1">
+              <Lightbulb className="w-4 h-4" /> Сценарий:
+            </p>
+            <p className="text-xs text-purple-700">Вместо ручного подсчета всего класса, просто введите количество пятерок, четверок, троек и двоек в калькуляторе качества знаний или СОУ. Мгновенный результат готов для вставки в отчет или аналитическую справку за 10 секунд.</p>
           </div>
         </section>
 
