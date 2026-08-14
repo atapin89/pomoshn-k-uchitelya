@@ -1,12 +1,10 @@
 import { useState } from 'react';
-// 1. ДОБАВЛЕНА ИКОНКА Calculator
 import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator } from 'lucide-react';
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
 
 interface HomeScreenProps {
-  // 2. ДОБАВЛЕН 'calculators' в типы маршрутов
   onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators') => void;
 }
 
@@ -18,38 +16,37 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
     {
       id: 'timer',
       title: 'Таймер урока',
-      description: 'Шаблоны и этапы',
+      description: 'Управляй временем',
       icon: Clock,
     },
     {
       id: 'generator',
       title: 'Жеребьёвка',
-      description: 'Случайный выбор',
+      description: 'Выбор и группы',
       icon: Dices,
     },
     {
       id: 'noise',
       title: 'Контроль шума',
-      description: 'Шумометр',
+      description: 'Индикатор тишины',
       icon: Volume2,
     },
     {
       id: 'flashcards',
       title: 'Флэш-карточки',
-      description: 'Колоды и изучение',
+      description: 'Запоминание терминов',
       icon: Layers,
     },
     {
       id: 'wordsearch',
       title: 'Филворды',
-      description: 'Поиск слов',
+      description: 'Головоломки для печати',
       icon: Grid3x3,
     },
-    // 3. ДОБАВЛЕН НОВЫЙ РАЗДЕЛ В МАССИВ (он займет 6-ю ячейку сетки)
     {
       id: 'calculators',
       title: 'Калькуляторы',
-      description: 'Баллы, СОУ, тесты',
+      description: 'Оценки и статистика',
       icon: Calculator,
     },
   ];
@@ -113,7 +110,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
               </div>
             );
           })}
-          {/* Заглушка "Новый раздел скоро" удалена, так как сетка теперь заполнена */}
         </div>
       </main>
 
