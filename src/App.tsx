@@ -15,10 +15,11 @@ import QuizScreen from '@/components/QuizScreen';
 import WordSearchScreen from '@/components/WordSearchScreen';
 import ManualScreen from '@/components/ManualScreen';
 import CalculatorsScreen from '@/components/CalculatorsScreen';
-import QuestBuilderScreen from '@/components/QuestBuilderScreen'; // <-- 1. ДОБАВЛЕН ИМПОРТ КОНСТРУКТОРА КВЕСТОВ
+import QuestBuilderScreen from '@/components/QuestBuilderScreen';
+import BingoGeneratorScreen from '@/components/BingoGeneratorScreen'; // <-- ДОБАВЛЕН ИМПОРТ БИНГО
 
-// <-- 2. ДОБАВЛЕН 'quests' в типы маршрутов
-type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators' | 'quests';
+// <-- ДОБАВЛЕН 'bingo' в типы маршрутов
+type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators' | 'quests' | 'bingo';
 
 export default function App() {
   const [route, setRoute] = useState<Route>('home');
@@ -144,12 +145,17 @@ export default function App() {
     return <CalculatorsScreen onBack={() => setRoute('home')} />;
   }
 
-  // 10. Конструктор квестов <-- 3. ДОБАВЛЕН НОВЫЙ МАРШРУТ
+  // 10. Конструктор квестов
   if (route === 'quests') {
     return <QuestBuilderScreen onBack={() => setRoute('home')} />;
   }
 
-  // 11. Активный таймер урока
+  // 11. Генератор Бинго <-- ДОБАВЛЕН НОВЫЙ МАРШРУТ
+  if (route === 'bingo') {
+    return <BingoGeneratorScreen onBack={() => setRoute('home')} />;
+  }
+
+  // 12. Активный таймер урока
   if (activeTemplate) {
     return (
       <ActiveTimer
@@ -160,7 +166,7 @@ export default function App() {
     );
   }
 
-  // 12. Список шаблонов таймера (по умолчанию)
+  // 13. Список шаблонов таймера (по умолчанию)
   return (
     <>
       <TemplateList
