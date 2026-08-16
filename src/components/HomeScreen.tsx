@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator, FlaskConical, Map, ArrowRight } from 'lucide-react';
+import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator, FlaskConical } from 'lucide-react';
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
 
 interface HomeScreenProps {
-  onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators' | 'quests') => void;
+  onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators') => void;
 }
 
 export default function HomeScreen({ onNavigate }: HomeScreenProps) {
@@ -54,7 +54,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
 
   return (
     <div className="min-h-[100dvh] notebook-bg flex flex-col">
-      {/* 4. Минимальный отступ сверху (pt-3 вместо pt-12) */}
+      {/* Минимальный отступ сверху */}
       <header className="max-w-md mx-auto w-full px-5 pt-3 pb-4">
         {/* Верхняя строка: иконка руководства слева, подпись автора справа */}
         <div className="flex items-center justify-between mb-1">
@@ -79,12 +79,12 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           </p>
         </div>
         
-        {/* 1. Заголовок в одну строку (whitespace-nowrap и адаптивный размер шрифта) */}
+        {/* Заголовок в одну строку */}
         <h1 className="text-3xl sm:text-4xl font-extrabold text-purple-700 text-center whitespace-nowrap">
           Помощник учителя
         </h1>
         
-        {/* 2. Увеличенный шрифт подзаголовка, но в одну строку */}
+        {/* Подзаголовок в одну строку */}
         <p className="text-sm sm:text-base text-gray-500 text-center whitespace-nowrap my-1">
           Простые инструменты для сложных задач
         </p>
@@ -146,34 +146,19 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           {/* Скрытый блок с экспериментальными функциями */}
           {showExperimental && (
             <div className="mt-3 bg-gray-100 rounded-2xl p-4 border-2 border-dashed border-gray-300 animate-in fade-in slide-in-from-top-2 duration-300">
-              <p className="text-xs text-gray-600 mb-3 font-medium">🧪 Тестируем новые возможности:</p>
-              
-              <button
-                onClick={() => onNavigate('quests')}
-                className="w-full bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-xl p-4 flex items-center gap-3 shadow-sm active:scale-[0.98] transition-all touch-manipulation"
-              >
-                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                  <Map className="w-5 h-5 text-white" />
-                </div>
-                <div className="text-left flex-1">
-                  <h3 className="text-sm font-bold leading-tight">Конструктор квестов</h3>
-                  <p className="text-white/70 text-xs mt-0.5">Образовательные квесты с QR-кодами</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-white/60" />
-              </button>
-
-              <div className="mt-3 flex items-start gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-                <p className="text-xs text-gray-600">
-                  Функции находятся на стадии тестирования. Возможна нестабильная работа.
+              <div className="text-center py-4">
+                <FlaskConical className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-sm text-gray-600 font-medium mb-2">Скоро появятся новые функции!</p>
+                <p className="text-xs text-gray-500">
+                  Следите за обновлениями в нашем сообществе
                 </p>
               </div>
             </div>
           )}
         </div>
 
-        {/* 3. Ссылка на сообщество с минимальными отступами сверху и снизу (mt-2 mb-1) */}
-        <div className="mt-2 mb-1 text-left">
+        {/* Ссылка на сообщество */}
+        <div className="mt-4 mb-1 text-left">
           <a
             href="https://max.ru/channel_topteach"
             target="_blank"
