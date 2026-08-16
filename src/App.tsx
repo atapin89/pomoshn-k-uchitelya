@@ -15,9 +15,10 @@ import QuizScreen from '@/components/QuizScreen';
 import WordSearchScreen from '@/components/WordSearchScreen';
 import ManualScreen from '@/components/ManualScreen';
 import CalculatorsScreen from '@/components/CalculatorsScreen';
-import SvoiaIgraScreen from '@/components/SvoiaIgraScreen'; // <-- 1. ИМПОРТ СВОЕЙ ИГРЫ
+// ИСПРАВЛЕНО: Импортируем Свою игру вместо Конструктора квестов
+import SvoiaIgraScreen from '@/components/SvoiaIgraScreen';
 
-// <-- 2. ДОБАВЛЕН 'svoia_igra' в типы маршрутов (quests и bingo удалены)
+// ИСПРАВЛЕНО: 'svoia_igra' вместо 'quests'
 type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators' | 'svoia_igra';
 
 export default function App() {
@@ -76,70 +77,31 @@ export default function App() {
 
   const allTemplates = [...presetTemplates, ...customTemplates];
 
-  if (route === 'home') {
-    return <HomeScreen onNavigate={setRoute} />;
-  }
-
-  if (route === 'generator') {
-    return <GeneratorScreen onBack={() => setRoute('home')} />;
-  }
-
-  if (route === 'noise') {
-    return <NoiseMonitorScreen onBack={() => setRoute('home')} />;
-  }
-
+  if (route === 'home') return <HomeScreen onNavigate={setRoute} />;
+  if (route === 'generator') return <GeneratorScreen onBack={() => setRoute('home')} />;
+  if (route === 'noise') return <NoiseMonitorScreen onBack={() => setRoute('home')} />;
+  
   if (route === 'flashcards') {
     return (
       <FlashcardsScreen
         onBack={() => setRoute('home')}
-        onStudy={(deckId: string) => {
-          setStudyDeckId(deckId);
-          setRoute('study');
-        }}
-        onQuiz={(deckId: string) => {
-          setQuizDeckId(deckId);
-          setRoute('quiz');
-        }}
+        onStudy={(deckId: string) => { setStudyDeckId(deckId); setRoute('study'); }}
+        onQuiz={(deckId: string) => { setQuizDeckId(deckId); setRoute('quiz'); }}
       />
     );
   }
 
-  if (route === 'study' && studyDeckId) {
-    return (
-      <StudyScreen
-        deckId={studyDeckId}
-        onBack={() => setRoute('flashcards')}
-      />
-    );
-  }
+  if (route === 'study' && studyDeckId) return <StudyScreen deckId={studyDeckId} onBack={() => setRoute('flashcards')} />;
+  if (route === 'quiz' && quizDeckId) return <QuizScreen deckId={quizDeckId} onBack={() => setRoute('flashcards')} />;
+  if (route === 'wordsearch') return <WordSearchScreen onBack={() => setRoute('home')} />;
+  if (route === 'manual') return <ManualScreen onBack={() => setRoute('home')} />;
+  if (route === 'calculators') return <CalculatorsScreen onBack={() => setRoute('home')} />;
 
-  if (route === 'quiz' && quizDeckId) {
-    return (
-      <QuizScreen
-        deckId={quizDeckId}
-        onBack={() => setRoute('flashcards')}
-      />
-    );
-  }
-
-  if (route === 'wordsearch') {
-    return <WordSearchScreen onBack={() => setRoute('home')} />;
-  }
-
-  if (route === 'manual') {
-    return <ManualScreen onBack={() => setRoute('home')} />;
-  }
-
-  if (route === 'calculators') {
-    return <CalculatorsScreen onBack={() => setRoute('home')} />;
-  }
-
-  // <-- 3. ПРОВЕРКА МАРШРУТА ДЛЯ СВОЕЙ ИГРЫ
+  // ИСПРАВЛЕНО: Маршрут для Своей игры
   if (route === 'svoia_igra') {
     return <SvoiaIgraScreen onBack={() => setRoute('home')} />;
   }
 
-  // Если маршрут не совпал ни с одним из вышеперечисленных, показываем таймер
   if (activeTemplate) {
     return (
       <ActiveTimer
@@ -150,7 +112,6 @@ export default function App() {
     );
   }
 
-  // По умолчанию показываем список шаблонов
   return (
     <>
       <TemplateList
