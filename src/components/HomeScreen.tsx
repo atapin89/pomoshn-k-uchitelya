@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator, FlaskConical } from 'lucide-react';
+import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator, FlaskConical, Map, ArrowRight }
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
