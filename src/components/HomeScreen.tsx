@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator, FlaskConical } from 'lucide-react';
+import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator } from 'lucide-react';
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
@@ -10,7 +10,6 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ onNavigate }: HomeScreenProps) {
   const [activeHelpModal, setActiveHelpModal] = useState<string | null>(null);
-  const [showExperimental, setShowExperimental] = useState(false);
 
   // Данные для сетки разделов
   const sections = [
@@ -119,42 +118,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
               </div>
             );
           })}
-        </div>
-
-        {/* Раздел "Экспериментальные функции" с приглушенными цветами */}
-        <div className="mt-4">
-          <button
-            onClick={() => setShowExperimental(!showExperimental)}
-            className="w-full bg-gradient-to-br from-gray-400 to-gray-500 text-white rounded-2xl p-4 flex items-center justify-between shadow-md active:scale-[0.98] transition-all touch-manipulation"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                <FlaskConical className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-left">
-                <h2 className="text-base font-bold leading-tight">Экспериментальные функции</h2>
-                <p className="text-white/70 text-xs mt-0.5">Новые инструменты в разработке</p>
-              </div>
-            </div>
-            <div className={`transform transition-transform ${showExperimental ? 'rotate-180' : ''}`}>
-              <svg className="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </button>
-
-          {/* Скрытый блок с экспериментальными функциями */}
-          {showExperimental && (
-            <div className="mt-3 bg-gray-100 rounded-2xl p-4 border-2 border-dashed border-gray-300 animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="text-center py-4">
-                <FlaskConical className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-sm text-gray-600 font-medium mb-2">Скоро появятся новые функции!</p>
-                <p className="text-xs text-gray-500">
-                  Следите за обновлениями в нашем сообществе
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Ссылка на сообщество */}
