@@ -1,9 +1,11 @@
 import { useState } from 'react';
+// ДОБАВЛЕНЫ недостающие иконки: ArrowRight, Tv
 import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator, FlaskConical, ArrowRight, Tv } from 'lucide-react';
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
 
+// ИСПРАВЛЕНО: добавлен 'svoia_igra' вместо 'quests'
 interface HomeScreenProps {
   onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators' | 'svoia_igra') => void;
 }
@@ -13,42 +15,12 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
   const [showExperimental, setShowExperimental] = useState(false);
 
   const sections = [
-    {
-      id: 'timer',
-      title: 'Таймер урока',
-      description: 'Шаблоны и этапы',
-      icon: Clock,
-    },
-    {
-      id: 'generator',
-      title: 'Жеребьёвка',
-      description: 'Случайный выбор',
-      icon: Dices,
-    },
-    {
-      id: 'noise',
-      title: 'Контроль шума',
-      description: 'Шумометр',
-      icon: Volume2,
-    },
-    {
-      id: 'flashcards',
-      title: 'Флэш-карточки',
-      description: 'Колоды и изучение',
-      icon: Layers,
-    },
-    {
-      id: 'wordsearch',
-      title: 'Филворды',
-      description: 'Поиск слов',
-      icon: Grid3x3,
-    },
-    {
-      id: 'calculators',
-      title: 'Калькуляторы',
-      description: 'Баллы, СОУ, тесты',
-      icon: Calculator,
-    },
+    { id: 'timer', title: 'Таймер урока', description: 'Шаблоны и этапы', icon: Clock },
+    { id: 'generator', title: 'Жеребьёвка', description: 'Случайный выбор', icon: Dices },
+    { id: 'noise', title: 'Контроль шума', description: 'Шумометр', icon: Volume2 },
+    { id: 'flashcards', title: 'Флэш-карточки', description: 'Колоды и изучение', icon: Layers },
+    { id: 'wordsearch', title: 'Филворды', description: 'Поиск слов', icon: Grid3x3 },
+    { id: 'calculators', title: 'Калькуляторы', description: 'Баллы, СОУ, тесты', icon: Calculator },
   ];
 
   return (
@@ -115,7 +87,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           })}
         </div>
 
-        {/* Раздел "Экспериментальные функции" */}
         <div className="mt-4">
           <button
             onClick={() => setShowExperimental(!showExperimental)}
@@ -141,6 +112,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
             <div className="mt-3 bg-gray-100 rounded-2xl p-4 border-2 border-dashed border-gray-300 animate-in fade-in slide-in-from-top-2 duration-300">
               <p className="text-xs text-gray-600 mb-3 font-medium">🧪 Тестируем новые возможности:</p>
               
+              {/* ИСПРАВЛЕНО: onNavigate теперь вызывает 'svoia_igra' */}
               <button
                 onClick={() => onNavigate('svoia_igra')}
                 className="w-full bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-xl p-4 flex items-center gap-3 shadow-sm active:scale-[0.98] transition-all touch-manipulation"
