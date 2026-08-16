@@ -1,11 +1,9 @@
 import { useState } from 'react';
-// ДОБАВЛЕНЫ недостающие иконки: ArrowRight, Tv
 import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator, FlaskConical, ArrowRight, Tv } from 'lucide-react';
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
 
-// ИСПРАВЛЕНО: добавлен 'svoia_igra' вместо 'quests'
 interface HomeScreenProps {
   onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators' | 'svoia_igra') => void;
 }
@@ -27,34 +25,18 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
     <div className="min-h-[100dvh] notebook-bg flex flex-col">
       <header className="max-w-md mx-auto w-full px-5 pt-3 pb-4">
         <div className="flex items-center justify-between mb-1">
-          <button
-            onClick={() => onNavigate('manual')}
-            className="text-gray-400 hover:text-purple-600 transition-colors p-1"
-            aria-label="Руководство по использованию"
-          >
+          <button onClick={() => onNavigate('manual')} className="text-gray-400 hover:text-purple-600 transition-colors p-1" aria-label="Руководство по использованию">
             <BookOpen className="w-5 h-5" />
           </button>
-          
           <p className="text-sm text-gray-500">
             Проект{' '}
-            <a 
-              href="https://vk.ru/aaatapin" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-purple-600 hover:text-purple-800 font-semibold underline transition-colors"
-            >
+            <a href="https://vk.ru/aaatapin" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-800 font-semibold underline transition-colors">
               Алексея Атапина
             </a>
           </p>
         </div>
-        
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-purple-700 text-center whitespace-nowrap">
-          Помощник учителя
-        </h1>
-        
-        <p className="text-sm sm:text-base text-gray-500 text-center whitespace-nowrap my-1">
-          Простые инструменты для сложных задач
-        </p>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-purple-700 text-center whitespace-nowrap">Помощник учителя</h1>
+        <p className="text-sm sm:text-base text-gray-500 text-center whitespace-nowrap my-1">Простые инструменты для сложных задач</p>
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
@@ -112,7 +94,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
             <div className="mt-3 bg-gray-100 rounded-2xl p-4 border-2 border-dashed border-gray-300 animate-in fade-in slide-in-from-top-2 duration-300">
               <p className="text-xs text-gray-600 mb-3 font-medium">🧪 Тестируем новые возможности:</p>
               
-              {/* ИСПРАВЛЕНО: onNavigate теперь вызывает 'svoia_igra' */}
               <button
                 onClick={() => onNavigate('svoia_igra')}
                 className="w-full bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-xl p-4 flex items-center gap-3 shadow-sm active:scale-[0.98] transition-all touch-manipulation"
@@ -138,12 +119,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
         </div>
 
         <div className="mt-4 mb-1 text-left">
-          <a
-            href="https://max.ru/channel_topteach"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-gray-600 hover:text-purple-600 font-medium transition-colors underline decoration-dotted underline-offset-4"
-          >
+          <a href="https://max.ru/channel_topteach" target="_blank" rel="noopener noreferrer" className="text-sm text-gray-600 hover:text-purple-600 font-medium transition-colors underline decoration-dotted underline-offset-4">
             Наше сообщество: вопросы и новости здесь
           </a>
         </div>
