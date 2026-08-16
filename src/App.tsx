@@ -17,6 +17,7 @@ import ManualScreen from '@/components/ManualScreen';
 import CalculatorsScreen from '@/components/CalculatorsScreen';
 import SvoiaIgraScreen from '@/components/SvoiaIgraScreen';
 import ExperimentalScreen from '@/components/ExperimentalScreen';
+import QuestBuilderScreen from '@/components/QuestBuilderScreen'; // <-- Добавлен импорт
 
 type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators' | 'experimental' | 'svoia_igra' | 'quests';
 
@@ -144,27 +145,17 @@ export default function App() {
     );
   }
 
-  // Своя игра
+  // Своя игра (возврат в экспериментальные функции)
   if (route === 'svoia_igra') {
     return <SvoiaIgraScreen onBack={() => setRoute('experimental')} />;
   }
 
-  // Конструктор квестов (заглушка)
+  // Конструктор квестов (возврат в экспериментальные функции)
   if (route === 'quests') {
-    return (
-      <div className="min-h-[100dvh] notebook-bg flex flex-col items-center justify-center p-5">
-        <h1 className="text-2xl font-bold text-gray-700 mb-3">Конструктор квестов</h1>
-        <p className="text-gray-600 text-center mb-6">Раздел в разработке</p>
-        <button
-          onClick={() => setRoute('experimental')}
-          className="bg-purple-600 text-white font-semibold rounded-xl px-6 py-3"
-        >
-          Вернуться назад
-        </button>
-      </div>
-    );
+    return <QuestBuilderScreen onBack={() => setRoute('experimental')} />;
   }
 
+  // Активный таймер урока
   if (activeTemplate) {
     return (
       <ActiveTimer
@@ -175,6 +166,7 @@ export default function App() {
     );
   }
 
+  // Список шаблонов таймера (по умолчанию)
   return (
     <>
       <TemplateList
