@@ -15,11 +15,10 @@ import QuizScreen from '@/components/QuizScreen';
 import WordSearchScreen from '@/components/WordSearchScreen';
 import ManualScreen from '@/components/ManualScreen';
 import CalculatorsScreen from '@/components/CalculatorsScreen';
-import QuestBuilderScreen from '@/components/QuestBuilderScreen';
-import BingoGeneratorScreen from '@/components/BingoGeneratorScreen'; // <-- ДОБАВЛЕН ИМПОРТ БИНГО
+import SvoiaIgraScreen from '@/components/SvoiaIgraScreen'; // <-- 1. ИМПОРТ СВОЕЙ ИГРЫ
 
-// <-- ДОБАВЛЕН 'bingo' в типы маршрутов
-type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators' | 'quests' | 'bingo';
+// <-- 2. ДОБАВЛЕН 'svoia_igra' в типы маршрутов (quests и bingo удалены)
+type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators' | 'svoia_igra';
 
 export default function App() {
   const [route, setRoute] = useState<Route>('home');
@@ -28,7 +27,6 @@ export default function App() {
   const [showCreate, setShowCreate] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<LessonTemplate | null>(null);
   
-  // Состояния для флэш-карточек
   const [studyDeckId, setStudyDeckId] = useState<string | null>(null);
   const [quizDeckId, setQuizDeckId] = useState<string | null>(null);
 
@@ -78,22 +76,18 @@ export default function App() {
 
   const allTemplates = [...presetTemplates, ...customTemplates];
 
-  // 1. Главная страница
   if (route === 'home') {
     return <HomeScreen onNavigate={setRoute} />;
   }
 
-  // 2. Генератор случайностей (Жеребьёвка)
   if (route === 'generator') {
     return <GeneratorScreen onBack={() => setRoute('home')} />;
   }
 
-  // 3. Контроль шума
   if (route === 'noise') {
     return <NoiseMonitorScreen onBack={() => setRoute('home')} />;
   }
 
-  // 4. Флэш-карточки (Дашборд)
   if (route === 'flashcards') {
     return (
       <FlashcardsScreen
@@ -110,7 +104,6 @@ export default function App() {
     );
   }
 
-  // 5. Режим изучения (Swiper)
   if (route === 'study' && studyDeckId) {
     return (
       <StudyScreen
@@ -120,7 +113,6 @@ export default function App() {
     );
   }
 
-  // 6. Режим тестирования (Quiz)
   if (route === 'quiz' && quizDeckId) {
     return (
       <QuizScreen
@@ -130,32 +122,24 @@ export default function App() {
     );
   }
 
-  // 7. Генератор филвордов
   if (route === 'wordsearch') {
     return <WordSearchScreen onBack={() => setRoute('home')} />;
   }
 
-  // 8. Руководство по использованию
   if (route === 'manual') {
     return <ManualScreen onBack={() => setRoute('home')} />;
   }
 
-  // 9. Раздел с калькуляторами
   if (route === 'calculators') {
     return <CalculatorsScreen onBack={() => setRoute('home')} />;
   }
 
-  // 10. Конструктор квестов
-  if (route === 'quests') {
-    return <QuestBuilderScreen onBack={() => setRoute('home')} />;
+  // <-- 3. ПРОВЕРКА МАРШРУТА ДЛЯ СВОЕЙ ИГРЫ
+  if (route === 'svoia_igra') {
+    return <SvoiaIgraScreen onBack={() => setRoute('home')} />;
   }
 
-  // 11. Генератор Бинго <-- ДОБАВЛЕН НОВЫЙ МАРШРУТ
-  if (route === 'bingo') {
-    return <BingoGeneratorScreen onBack={() => setRoute('home')} />;
-  }
-
-  // 12. Активный таймер урока
+  // Если маршрут не совпал ни с одним из вышеперечисленных, показываем таймер
   if (activeTemplate) {
     return (
       <ActiveTimer
@@ -166,7 +150,7 @@ export default function App() {
     );
   }
 
-  // 13. Список шаблонов таймера (по умолчанию)
+  // По умолчанию показываем список шаблонов
   return (
     <>
       <TemplateList
