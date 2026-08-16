@@ -139,7 +139,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
 
           {showExperimental && (
             <div className="mt-3 bg-gray-100 rounded-2xl p-4 border-2 border-dashed border-gray-300 animate-in fade-in slide-in-from-top-2 duration-300">
-              <p className="text-xs text-gray-600 mb-3 font-medium"> Тестируем новые возможности:</p>
+              <p className="text-xs text-gray-600 mb-3 font-medium">🧪 Тестируем новые возможности:</p>
               
               <button
                 onClick={() => onNavigate('svoia_igra')}
