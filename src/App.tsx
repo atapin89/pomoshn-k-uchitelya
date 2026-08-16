@@ -15,10 +15,8 @@ import QuizScreen from '@/components/QuizScreen';
 import WordSearchScreen from '@/components/WordSearchScreen';
 import ManualScreen from '@/components/ManualScreen';
 import CalculatorsScreen from '@/components/CalculatorsScreen';
-// ИСПРАВЛЕНО: Импортируем Свою игру вместо Конструктора квестов
 import SvoiaIgraScreen from '@/components/SvoiaIgraScreen';
 
-// ИСПРАВЛЕНО: 'svoia_igra' вместо 'quests'
 type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators' | 'svoia_igra';
 
 export default function App() {
@@ -97,7 +95,7 @@ export default function App() {
   if (route === 'manual') return <ManualScreen onBack={() => setRoute('home')} />;
   if (route === 'calculators') return <CalculatorsScreen onBack={() => setRoute('home')} />;
 
-  // ИСПРАВЛЕНО: Маршрут для Своей игры
+  // Маршрут для Своей игры
   if (route === 'svoia_igra') {
     return <SvoiaIgraScreen onBack={() => setRoute('home')} />;
   }
