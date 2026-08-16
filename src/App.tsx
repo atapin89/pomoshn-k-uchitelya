@@ -14,10 +14,11 @@ import StudyScreen from '@/components/StudyScreen';
 import QuizScreen from '@/components/QuizScreen';
 import WordSearchScreen from '@/components/WordSearchScreen';
 import ManualScreen from '@/components/ManualScreen';
-import CalculatorsScreen from '@/components/CalculatorsScreen'; // <-- 1. ДОБАВЛЕН ИМПОРТ КАЛЬКУЛЯТОРОВ
+import CalculatorsScreen from '@/components/CalculatorsScreen';
+import QuestBuilderScreen from '@/components/QuestBuilderScreen'; // <-- 1. ДОБАВЛЕН ИМПОРТ КОНСТРУКТОРА КВЕСТОВ
 
-// <-- 2. ДОБАВЛЕН 'calculators' в типы маршрутов
-type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators';
+// <-- 2. ДОБАВЛЕН 'quests' в типы маршрутов
+type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators' | 'quests';
 
 export default function App() {
   const [route, setRoute] = useState<Route>('home');
@@ -138,12 +139,17 @@ export default function App() {
     return <ManualScreen onBack={() => setRoute('home')} />;
   }
 
-  // 9. Раздел с калькуляторами <-- 3. ДОБАВЛЕН НОВЫЙ МАРШРУТ
+  // 9. Раздел с калькуляторами
   if (route === 'calculators') {
     return <CalculatorsScreen onBack={() => setRoute('home')} />;
   }
 
-  // 10. Активный таймер урока
+  // 10. Конструктор квестов <-- 3. ДОБАВЛЕН НОВЫЙ МАРШРУТ
+  if (route === 'quests') {
+    return <QuestBuilderScreen onBack={() => setRoute('home')} />;
+  }
+
+  // 11. Активный таймер урока
   if (activeTemplate) {
     return (
       <ActiveTimer
@@ -154,7 +160,7 @@ export default function App() {
     );
   }
 
-  // 11. Список шаблонов таймера (по умолчанию)
+  // 12. Список шаблонов таймера (по умолчанию)
   return (
     <>
       <TemplateList
