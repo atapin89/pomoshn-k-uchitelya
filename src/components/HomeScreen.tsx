@@ -165,7 +165,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
               <div className="mt-3 flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                 <p className="text-xs text-gray-600">
-                  Функция находится в бета-тестировании. Возможны небольшие изменения в интерфейсе.
+                  Функции находятся на стадии тестирования. Возможна нестабильная работа.
                 </p>
               </div>
             </div>
