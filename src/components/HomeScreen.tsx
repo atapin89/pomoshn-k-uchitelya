@@ -1,18 +1,17 @@
 import { useState } from 'react';
-import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator, FlaskConical, ArrowRight, Ticket } from 'lucide-react';
+import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator, FlaskConical, ArrowRight, Tv } from 'lucide-react';
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
 
 interface HomeScreenProps {
-  onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators' | 'bingo') => void;
+  onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators' | 'svoia_igra') => void;
 }
 
 export default function HomeScreen({ onNavigate }: HomeScreenProps) {
   const [activeHelpModal, setActiveHelpModal] = useState<string | null>(null);
   const [showExperimental, setShowExperimental] = useState(false);
 
-  // Данные для сетки разделов
   const sections = [
     {
       id: 'timer',
@@ -54,9 +53,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
 
   return (
     <div className="min-h-[100dvh] notebook-bg flex flex-col">
-      {/* Минимальный отступ сверху */}
       <header className="max-w-md mx-auto w-full px-5 pt-3 pb-4">
-        {/* Верхняя строка: иконка руководства слева, подпись автора справа */}
         <div className="flex items-center justify-between mb-1">
           <button
             onClick={() => onNavigate('manual')}
@@ -79,19 +76,16 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           </p>
         </div>
         
-        {/* Заголовок в одну строку */}
         <h1 className="text-3xl sm:text-4xl font-extrabold text-purple-700 text-center whitespace-nowrap">
           Помощник учителя
         </h1>
         
-        {/* Подзаголовок в одну строку */}
         <p className="text-sm sm:text-base text-gray-500 text-center whitespace-nowrap my-1">
           Простые инструменты для сложных задач
         </p>
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full px-5 pb-5">
-        {/* Сетка разделов (2×3) */}
         <div className="grid grid-cols-2 gap-4">
           {sections.map((section) => {
             const Icon = section.icon;
@@ -121,7 +115,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           })}
         </div>
 
-        {/* Раздел "Экспериментальные функции" с приглушенными цветами */}
+        {/* Раздел "Экспериментальные функции" */}
         <div className="mt-4">
           <button
             onClick={() => setShowExperimental(!showExperimental)}
@@ -143,22 +137,20 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
             </div>
           </button>
 
-          {/* Скрытый блок с экспериментальными функциями */}
           {showExperimental && (
             <div className="mt-3 bg-gray-100 rounded-2xl p-4 border-2 border-dashed border-gray-300 animate-in fade-in slide-in-from-top-2 duration-300">
-              <p className="text-xs text-gray-600 mb-3 font-medium">🧪 Тестируем новые возможности:</p>
+              <p className="text-xs text-gray-600 mb-3 font-medium"> Тестируем новые возможности:</p>
               
-              {/* Генератор Бинго */}
               <button
-                onClick={() => onNavigate('bingo')}
+                onClick={() => onNavigate('svoia_igra')}
                 className="w-full bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-xl p-4 flex items-center gap-3 shadow-sm active:scale-[0.98] transition-all touch-manipulation"
               >
                 <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                  <Ticket className="w-5 h-5 text-white" />
+                  <Tv className="w-5 h-5 text-white" />
                 </div>
                 <div className="text-left flex-1">
-                  <h3 className="text-sm font-bold leading-tight">Генератор Бинго</h3>
-                  <p className="text-white/70 text-xs mt-0.5">Карточки для игры с PDF</p>
+                  <h3 className="text-sm font-bold leading-tight">Своя игра</h3>
+                  <p className="text-white/70 text-xs mt-0.5">Интерактивная игра для класса</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-white/60" />
               </button>
@@ -173,7 +165,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           )}
         </div>
 
-        {/* Ссылка на сообщество */}
         <div className="mt-4 mb-1 text-left">
           <a
             href="https://max.ru/channel_topteach"
