@@ -96,7 +96,6 @@ export default function App() {
   if (route === 'manual') return <ManualScreen onBack={() => setRoute('home')} />;
   if (route === 'calculators') return <CalculatorsScreen onBack={() => setRoute('home')} />;
 
-  // Экспериментальные функции
   if (route === 'experimental') {
     return (
       <ExperimentalScreen
@@ -106,7 +105,6 @@ export default function App() {
     );
   }
 
-  // Своя игра
   if (route === 'svoia_igra') {
     return <SvoiaIgraScreen onBack={() => setRoute('experimental')} />;
   }
