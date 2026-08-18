@@ -36,7 +36,6 @@ export default function ExperimentalScreen({ onBack, onNavigate }: ExperimentalS
           </div>
         </div>
 
-        {/* Кнопка "Своя игра" */}
         <button
           onClick={() => onNavigate('svoia_igra')}
           className="w-full bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-xl p-4 flex items-center gap-3 shadow-sm active:scale-[0.98] transition-all touch-manipulation"
