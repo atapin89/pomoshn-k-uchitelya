@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator, FlaskConical, ArrowRight } from 'lucide-react';
+import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator } from 'lucide-react';
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
 
 interface HomeScreenProps {
-  onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators' | 'experimental') => void;
+  onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators' | 'svoia_igra') => void;
 }
 
 export default function HomeScreen({ onNavigate }: HomeScreenProps) {
@@ -67,20 +67,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
             );
           })}
         </div>
-
-        <button
-          onClick={() => onNavigate('experimental')}
-          className="w-full mt-4 bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white rounded-xl p-3 flex items-center gap-3 shadow-md active:scale-[0.98] transition-all touch-manipulation"
-        >
-          <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-            <FlaskConical className="w-5 h-5 text-white" />
-          </div>
-          <div className="text-left flex-1">
-            <h3 className="text-sm font-bold leading-tight">Экспериментальные функции</h3>
-            <p className="text-white/70 text-xs">Новые инструменты в разработке</p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-white/60" />
-        </button>
 
         <div className="mt-4 mb-1 text-left">
           <a href="https://max.ru/channel_topteach" target="_blank" rel="noopener noreferrer" className="text-sm text-gray-600 hover:text-purple-600 font-medium transition-colors underline decoration-dotted underline-offset-4">
