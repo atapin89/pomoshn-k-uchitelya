@@ -18,6 +18,7 @@ import CalculatorsScreen from '@/components/CalculatorsScreen';
 import SvoiaIgraScreen from '@/components/SvoiaIgraScreen';
 import ExperimentalScreen from '@/components/ExperimentalScreen';
 
+// ДОБАВЛЕНО: 'experimental' в тип Route
 type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators' | 'experimental' | 'svoia_igra';
 
 export default function App() {
@@ -96,6 +97,7 @@ export default function App() {
   if (route === 'manual') return <ManualScreen onBack={() => setRoute('home')} />;
   if (route === 'calculators') return <CalculatorsScreen onBack={() => setRoute('home')} />;
 
+  // ДОБАВЛЕНО: Обработка маршрута 'experimental'
   if (route === 'experimental') {
     return (
       <ExperimentalScreen
