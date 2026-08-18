@@ -16,10 +16,9 @@ import WordSearchScreen from '@/components/WordSearchScreen';
 import ManualScreen from '@/components/ManualScreen';
 import CalculatorsScreen from '@/components/CalculatorsScreen';
 import SvoiaIgraScreen from '@/components/SvoiaIgraScreen';
-import ExperimentalScreen from '@/components/ExperimentalScreen'; // <-- 1. ДОБАВЛЕН ИМПОРТ
 
-// <-- 2. ДОБАВЛЕН 'experimental' в типы маршрутов
-type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators' | 'experimental' | 'svoia_igra';
+// Убран 'experimental' из типов
+type Route = 'home' | 'timer' | 'generator' | 'noise' | 'flashcards' | 'study' | 'quiz' | 'wordsearch' | 'manual' | 'calculators' | 'svoia_igra';
 
 export default function App() {
   const [route, setRoute] = useState<Route>('home');
@@ -97,19 +96,9 @@ export default function App() {
   if (route === 'manual') return <ManualScreen onBack={() => setRoute('home')} />;
   if (route === 'calculators') return <CalculatorsScreen onBack={() => setRoute('home')} />;
 
-  // <-- 3. ДОБАВЛЕНА ОБРАБОТКА РАЗДЕЛА "ЭКСПЕРИМЕНТАЛЬНЫЕ ФУНКЦИИ"
-  if (route === 'experimental') {
-    return (
-      <ExperimentalScreen
-        onBack={() => setRoute('home')}
-        onNavigate={(subRoute) => setRoute(subRoute)}
-      />
-    );
-  }
-
-  // <-- 4. ИСПРАВЛЕН ВОЗВРАТ: теперь ведёт обратно в experimental, а не на home
+  // Своя игра (теперь возвращает сразу на главную)
   if (route === 'svoia_igra') {
-    return <SvoiaIgraScreen onBack={() => setRoute('experimental')} />;
+    return <SvoiaIgraScreen onBack={() => setRoute('home')} />;
   }
 
   if (activeTemplate) {
