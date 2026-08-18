@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator, Tv } from 'lucide-react';
+import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculator } from 'lucide-react';
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
 
 interface HomeScreenProps {
-  onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators' | 'svoia_igra') => void;
+  onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators') => void;
 }
 
 export default function HomeScreen({ onNavigate }: HomeScreenProps) {
@@ -18,7 +18,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
     { id: 'flashcards', title: 'Флэш-карточки', description: 'Колоды и изучение', icon: Layers },
     { id: 'wordsearch', title: 'Филворды', description: 'Поиск слов', icon: Grid3x3 },
     { id: 'calculators', title: 'Калькуляторы', description: 'Баллы, СОУ, тесты', icon: Calculator },
-    { id: 'svoia_igra', title: 'Своя игра', description: 'Интерактивная игра', icon: Tv },
   ];
 
   return (
@@ -32,6 +31,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
           >
             <BookOpen className="w-5 h-5" />
           </button>
+          
           <p className="text-sm text-gray-500">
             Проект{' '}
             <a 
@@ -44,9 +44,11 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
             </a>
           </p>
         </div>
+        
         <h1 className="text-3xl sm:text-4xl font-extrabold text-purple-700 text-center whitespace-nowrap">
           Помощник учителя
         </h1>
+        
         <p className="text-sm sm:text-base text-gray-500 text-center whitespace-nowrap my-1">
           Простые инструменты для сложных задач
         </p>
