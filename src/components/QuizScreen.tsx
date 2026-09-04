@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Brain, Check, X, Trophy, RotateCcw } from 'lucide-react';
 import BackButton from './BackButton';
-import { loadCustomTemplates } from '@/lib/storage';
 
 interface Flashcard {
   question: string;
@@ -16,6 +15,15 @@ interface Deck {
   createdAt: number;
 }
 
+const STORAGE_KEY = 'flashcards_decks';
+
+const loadDecks = (): Deck[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+};
+
 export default function QuizScreen({ deckId, onBack }: { deckId: string; onBack: () => void }) {
   const [deck, setDeck] = useState<Deck | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -25,8 +33,8 @@ export default function QuizScreen({ deckId, onBack }: { deckId: string; onBack:
   const [options, setOptions] = useState<string[]>([]);
 
   useEffect(() => {
-    const decks = loadCustomTemplates();
-    const foundDeck = decks.find(d => d.id === deckId) as Deck | undefined;
+    const decks = loadDecks();
+    const foundDeck = decks.find(d => d.id === deckId);
     if (foundDeck) {
       setDeck(foundDeck);
       generateOptions(foundDeck.cards[0], foundDeck.cards);
@@ -96,7 +104,7 @@ export default function QuizScreen({ deckId, onBack }: { deckId: string; onBack:
       message = 'Отлично! 🎉';
       color = 'text-green-600';
     } else if (percentage >= 70) {
-      message = 'Хороший результат! ';
+      message = 'Хороший результат! 👍';
       color = 'text-blue-600';
     } else if (percentage >= 50) {
       message = 'Неплохо, но можно лучше 💪';
