@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, ArrowLeft, RotateCcw, Check, X } from 'lucide-react';
+import { BookOpen, ArrowLeft, RotateCcw } from 'lucide-react';
 import BackButton from './BackButton';
-import { loadCustomTemplates } from '@/lib/storage';
 
 interface Flashcard {
   question: string;
@@ -16,14 +15,23 @@ interface Deck {
   createdAt: number;
 }
 
+const STORAGE_KEY = 'flashcards_decks';
+
+const loadDecks = (): Deck[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+};
+
 export default function StudyScreen({ deckId, onBack }: { deckId: string; onBack: () => void }) {
   const [deck, setDeck] = useState<Deck | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
 
   useEffect(() => {
-    const decks = loadCustomTemplates();
-    const foundDeck = decks.find(d => d.id === deckId) as Deck | undefined;
+    const decks = loadDecks();
+    const foundDeck = decks.find(d => d.id === deckId);
     if (foundDeck) {
       setDeck(foundDeck);
     }
@@ -90,12 +98,10 @@ export default function StudyScreen({ deckId, onBack }: { deckId: string; onBack
         {/* Карточка */}
         <div
           onClick={() => setIsFlipped(!isFlipped)}
-          className="flex-1 cursor-pointer perspective-1000"
+          className="flex-1 cursor-pointer"
         >
           <div
-            className={`relative w-full h-full transition-transform duration-500 transform-style-preserve-3d ${
-              isFlipped ? 'rotate-y-180' : ''
-            }`}
+            className="relative w-full h-full transition-transform duration-500"
             style={{
               transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
               transformStyle: 'preserve-3d',
@@ -103,7 +109,7 @@ export default function StudyScreen({ deckId, onBack }: { deckId: string; onBack
           >
             {/* Лицевая сторона */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-purple-500 to-violet-600 rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl backface-hidden"
+              className="absolute inset-0 bg-gradient-to-br from-purple-500 to-violet-600 rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl"
               style={{ backfaceVisibility: 'hidden' }}
             >
               <p className="text-white/80 text-sm mb-4">Вопрос</p>
