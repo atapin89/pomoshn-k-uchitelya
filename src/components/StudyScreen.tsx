@@ -1,201 +1,162 @@
 import { useState, useEffect } from 'react';
-import { X, RotateCw, Check, RotateCcw } from 'lucide-react';
-import type { Deck } from '@/types';
-import { loadDecks, saveDecks } from '@/lib/storage';
-import { triggerHaptic } from '@/lib/haptic';
+import { BookOpen, ArrowLeft, RotateCcw, Check, X } from 'lucide-react';
 import BackButton from './BackButton';
-import YandexAdBlock from './YandexAdBlock'; // <-- ДОБАВЛЕН ИМПОРТ
+import { loadCustomTemplates } from '@/lib/storage';
 
-interface StudyScreenProps {
-  deckId: string;
-  onBack: () => void;
+interface Flashcard {
+  question: string;
+  answer: string;
 }
 
-export default function StudyScreen({ deckId, onBack }: StudyScreenProps) {
+interface Deck {
+  id: string;
+  title: string;
+  description: string;
+  cards: Flashcard[];
+  createdAt: number;
+}
+
+export default function StudyScreen({ deckId, onBack }: { deckId: string; onBack: () => void }) {
   const [deck, setDeck] = useState<Deck | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [isReverse, setIsReverse] = useState(false);
-  const [sessionCards, setSessionCards] = useState<any[]>([]);
-  const [sessionComplete, setSessionComplete] = useState(false);
-  const [stats, setStats] = useState({ learned: 0, mistakes: 0 });
 
   useEffect(() => {
-    let deckToStudy: Deck | null = null;
-    
-    if (deckId === 'mistakes-temp') {
-      const tempData = localStorage.getItem('temp_study_deck');
-      if (tempData) deckToStudy = JSON.parse(tempData);
-    } else {
-      const allDecks = loadDecks();
-      deckToStudy = allDecks.find((d) => d.id === deckId) || null;
-    }
-
-    if (deckToStudy) {
-      setDeck(deckToStudy);
-      let cards = deckToStudy.cards;
-      if (deckId !== 'mistakes-temp') {
-        cards = cards.filter((c) => c.status !== 'learned');
-      }
-      const shuffled = [...cards].sort(() => Math.random() - 0.5);
-      setSessionCards(shuffled);
+    const decks = loadCustomTemplates();
+    const foundDeck = decks.find(d => d.id === deckId) as Deck | undefined;
+    if (foundDeck) {
+      setDeck(foundDeck);
     }
   }, [deckId]);
 
-  const handleEvaluate = (knows: boolean) => {
-    if (!deck || sessionCards.length === 0) return;
-    const currentCard = sessionCards[currentIndex];
-    
-    const updatedDecks = loadDecks().map((d) => {
-      if (d.id !== deck.id) return d;
-      return {
-        ...d,
-        cards: d.cards.map((card) => {
-          if (card.id === currentCard.id) {
-            return {
-              ...card,
-              status: knows ? 'learned' as const : 'mistake' as const,
-              lastReviewed: Date.now(),
-              errorCount: knows ? 0 : (card.errorCount || 0) + 1,
-            };
-          }
-          return card;
-        }),
-        lastStudied: Date.now(),
-      };
-    });
-
-    saveDecks(updatedDecks);
-    setDeck(updatedDecks.find((d) => d.id === deck.id) || null);
-    triggerHaptic(knows ? 'heavy' : 'medium');
-
-    if (knows) setStats(s => ({ ...s, learned: s.learned + 1 }));
-    else setStats(s => ({ ...s, mistakes: s.mistakes + 1 }));
-
-    if (currentIndex < sessionCards.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-      setIsFlipped(false);
-    } else {
-      setSessionComplete(true);
-    }
-  };
-
   if (!deck) {
     return (
-      <div className="min-h-[100dvh] bg-purple-50 flex flex-col items-center justify-center p-6">
-        <p className="text-purple-700 text-lg font-semibold mb-4">Колода не найдена</p>
-        <button onClick={onBack} className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold">Назад</button>
+      <div className="min-h-[100dvh] notebook-bg flex flex-col items-center justify-center p-5">
+        <p className="text-gray-600 mb-4">Колода не найдена</p>
+        <button
+          onClick={onBack}
+          className="bg-purple-600 text-white font-semibold rounded-xl px-6 py-3"
+        >
+          Вернуться назад
+        </button>
       </div>
     );
   }
 
-  if (sessionComplete) {
-    return (
-      <div className="min-h-[100dvh] bg-purple-50 flex flex-col">
-        <header className="bg-purple-700 shadow-md sticky top-0 z-10">
-          <div className="max-w-md mx-auto px-5 py-4"><BackButton onClick={onBack} variant="light" /></div>
-        </header>
-        <main className="flex-1 max-w-md mx-auto w-full px-5 py-6 flex flex-col items-center justify-center text-center">
-          <div className="bg-white rounded-3xl p-8 shadow-xl w-full">
-            <h2 className="text-3xl font-bold text-purple-700 mb-2">Сессия завершена! 🎉</h2>
-            <p className="text-gray-600 mb-6">{deck.title}</p>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-green-50 rounded-2xl p-4">
-                <div className="text-3xl font-bold text-green-600">{stats.learned}</div>
-                <div className="text-sm text-green-700">Выучено</div>
-              </div>
-              <div className="bg-orange-50 rounded-2xl p-4">
-                <div className="text-3xl font-bold text-orange-600">{stats.mistakes}</div>
-                <div className="text-sm text-orange-700">На повторение</div>
-              </div>
-            </div>
-            <button onClick={onBack} className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg">Вернуться к колодам</button>
-          </div>
-          <YandexAdBlock /> {/* <-- ДОБАВЛЕН КОМПОНЕНТ РЕКЛАМЫ */}
-        </main>
-      </div>
-    );
-  }
+  const currentCard = deck.cards[currentIndex];
 
-  if (sessionCards.length === 0) {
-    return (
-      <div className="min-h-[100dvh] bg-purple-50 flex flex-col items-center justify-center p-6">
-        <p className="text-purple-700 text-lg font-semibold mb-4">Все карточки изучены! 🎉</p>
-        <button onClick={onBack} className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold">Назад</button>
-      </div>
-    );
-  }
+  const handleNext = () => {
+    setIsFlipped(false);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % deck.cards.length);
+    }, 200);
+  };
 
-  const currentCard = sessionCards[currentIndex];
-  const progress = ((currentIndex) / sessionCards.length) * 100;
-  const questionSide = isReverse ? currentCard.sides[currentCard.sides.length - 1] : currentCard.sides[0];
-  const answerSide = isReverse ? currentCard.sides[0] : currentCard.sides[1];
-  const extraSides = currentCard.sides.slice(2);
+  const handlePrev = () => {
+    setIsFlipped(false);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev - 1 + deck.cards.length) % deck.cards.length);
+    }, 200);
+  };
 
   return (
-    <div className="min-h-[100dvh] bg-purple-50 flex flex-col">
+    <div className="min-h-[100dvh] notebook-bg flex flex-col">
       <header className="bg-purple-700 shadow-md sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-5 py-4">
-          <div className="flex items-center justify-between">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="shrink-0">
             <BackButton onClick={onBack} variant="light" />
-            <button
-              onClick={() => { setIsReverse(!isReverse); setIsFlipped(false); triggerHaptic('light'); }}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${isReverse ? 'bg-orange-500 text-white' : 'bg-white/20 text-white'}`}
-            >
-              <RotateCcw className="w-3 h-3" /> Обратный
-            </button>
           </div>
-          <div className="flex items-center justify-between mt-3">
+          <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold text-white truncate">{deck.title}</h1>
-            <span className="text-white/80 text-sm font-semibold">{currentIndex + 1} / {sessionCards.length}</span>
+            <p className="text-xs text-purple-200">
+              Карточка {currentIndex + 1} из {deck.cards.length}
+            </p>
           </div>
-          <div className="w-full h-1.5 bg-white/20 rounded-full mt-3 overflow-hidden">
-            <div className="h-full bg-white rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+          <div className="shrink-0 w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
+            <BookOpen className="w-5 h-5 text-white" />
           </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-md mx-auto w-full px-5 py-6 flex flex-col items-center justify-center gap-6">
-        <div
-          onClick={() => { setIsFlipped(!isFlipped); triggerHaptic('light'); }}
-          className="w-full aspect-[4/5] bg-white rounded-3xl shadow-xl border-2 border-purple-200 flex flex-col items-center justify-center p-8 text-center cursor-pointer active:scale-95 transition-transform relative"
-        >
-          <span className="text-xs text-purple-400 uppercase tracking-wider mb-4 font-semibold">
-            {isFlipped ? (isReverse ? 'Вопрос' : 'Ответ') : (isReverse ? 'Ответ' : 'Вопрос')}
-          </span>
-          <p className="text-2xl font-bold text-purple-900 leading-relaxed">
-            {isFlipped ? (answerSide || '...') : (questionSide || '...')}
-          </p>
-          {currentCard.sides.length > 2 && isFlipped && extraSides.length > 0 && (
-            <div className="mt-6 space-y-2 w-full">
-              {extraSides.map((side, idx) => (
-                <div key={idx} className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                  <span className="text-xs font-bold text-purple-500 block mb-1">Сторона {idx + 3}</span>
-                  <p className="text-sm text-purple-800">{side}</p>
-                </div>
-              ))}
-            </div>
-          )}
-          <p className="absolute bottom-6 text-purple-400 text-sm">
-            {isFlipped ? 'Нажми, чтобы вернуться' : 'Нажми, чтобы перевернуть'}
-          </p>
+      <main className="flex-1 max-w-md mx-auto w-full px-5 py-5 flex flex-col">
+        {/* Прогресс-бар */}
+        <div className="w-full h-2 bg-gray-200 rounded-full mb-6 overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-purple-500 to-violet-600 rounded-full transition-all duration-300"
+            style={{ width: `${((currentIndex + 1) / deck.cards.length) * 100}%` }}
+          />
         </div>
 
-        {!isFlipped ? (
-          <button onClick={() => setIsFlipped(true)} className="w-full bg-purple-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
-            <RotateCw size={20} /> Показать ответ
-          </button>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 w-full">
-            <button onClick={() => handleEvaluate(false)} className="bg-orange-100 text-orange-700 py-4 rounded-2xl font-bold text-lg flex flex-col items-center gap-1 border-2 border-orange-200 active:scale-95 transition-transform">
-              <X size={24} /> <span className="text-sm">Повторить</span>
-            </button>
-            <button onClick={() => handleEvaluate(true)} className="bg-purple-600 text-white py-4 rounded-2xl font-bold text-lg flex flex-col items-center gap-1 shadow-lg active:scale-95 transition-transform">
-              <Check size={24} /> <span className="text-sm">Знаю</span>
-            </button>
+        {/* Карточка */}
+        <div
+          onClick={() => setIsFlipped(!isFlipped)}
+          className="flex-1 cursor-pointer perspective-1000"
+        >
+          <div
+            className={`relative w-full h-full transition-transform duration-500 transform-style-preserve-3d ${
+              isFlipped ? 'rotate-y-180' : ''
+            }`}
+            style={{
+              transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+              transformStyle: 'preserve-3d',
+            }}
+          >
+            {/* Лицевая сторона */}
+            <div
+              className="absolute inset-0 bg-gradient-to-br from-purple-500 to-violet-600 rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl backface-hidden"
+              style={{ backfaceVisibility: 'hidden' }}
+            >
+              <p className="text-white/80 text-sm mb-4">Вопрос</p>
+              <p className="text-2xl font-bold text-white text-center leading-relaxed">
+                {currentCard.question}
+              </p>
+              <p className="text-white/60 text-xs mt-6">Нажмите, чтобы перевернуть</p>
+            </div>
+
+            {/* Обратная сторона */}
+            <div
+              className="absolute inset-0 bg-gradient-to-br from-amber-400 to-orange-500 rounded-3xl p-8 flex flex-col items-center justify-center shadow-xl"
+              style={{
+                backfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg)',
+              }}
+            >
+              <p className="text-white/80 text-sm mb-4">Ответ</p>
+              <p className="text-2xl font-bold text-white text-center leading-relaxed">
+                {currentCard.answer}
+              </p>
+              <p className="text-white/60 text-xs mt-6">Нажмите, чтобы перевернуть</p>
+            </div>
           </div>
-        )}
-        <YandexAdBlock /> {/* <-- ДОБАВЛЕН КОМПОНЕНТ РЕКЛАМЫ */}
+        </div>
+
+        {/* Навигация */}
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={handlePrev}
+            className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-xl py-3 flex items-center justify-center gap-2 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" /> Назад
+          </button>
+          <button
+            onClick={handleNext}
+            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2 transition-colors"
+          >
+            Далее <ArrowLeft className="w-5 h-5 rotate-180" />
+          </button>
+        </div>
+
+        {/* Индикаторы карточек */}
+        <div className="flex justify-center gap-1 mt-4 flex-wrap">
+          {deck.cards.map((_, idx) => (
+            <div
+              key={idx}
+              className={`w-2 h-2 rounded-full transition-all ${
+                idx === currentIndex ? 'bg-purple-600 w-4' : 'bg-gray-300'
+              }`}
+            />
+          ))}
+        </div>
       </main>
     </div>
   );
