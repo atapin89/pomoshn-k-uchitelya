@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Layers, Plus, Trash2, Edit3, BookOpen, Brain, Trophy, Target, Clock, ArrowLeft, Globe } from 'lucide-react';
+import { Layers, Plus, Trash2, BookOpen, Brain, Target, Clock, Trophy, Globe } from 'lucide-react';
 import BackButton from './BackButton';
 import YandexAdBlock from './YandexAdBlock';
 
@@ -16,7 +16,7 @@ interface Deck {
   createdAt: number;
 }
 
-type Screen = 'list' | 'create' | 'study' | 'quiz' | 'demo';
+type Screen = 'list' | 'create';
 
 // Демо-колода: Мировые столицы
 const DEMO_CAPITALS: Flashcard[] = [
@@ -63,7 +63,6 @@ export default function FlashcardsScreen({
 }) {
   const [screen, setScreen] = useState<Screen>('list');
   const [decks, setDecks] = useState<Deck[]>(loadDecks());
-  const [currentDeck, setCurrentDeck] = useState<Deck | null>(null);
   
   // Состояния для создания колоды
   const [deckTitle, setDeckTitle] = useState('');
@@ -114,7 +113,7 @@ export default function FlashcardsScreen({
   const loadDemoDeck = () => {
     const demoDeck: Deck = {
       id: generateId(),
-      title: ' Мировые столицы',
+      title: '🌍 Мировые столицы',
       description: 'Столицы стран мира',
       cards: DEMO_CAPITALS,
       createdAt: Date.now(),
@@ -193,13 +192,13 @@ export default function FlashcardsScreen({
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => onStudy(deck.id)}
-                      className="bg-purple-600 text-white font-semibold rounded-xl py-2.5 flex items-center justify-center gap-1.5 text-sm active:scale-95 transition-transform"
+                      className="bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl py-2.5 flex items-center justify-center gap-1.5 text-sm active:scale-95 transition-transform"
                     >
                       <BookOpen className="w-4 h-4" /> Изучать
                     </button>
                     <button
                       onClick={() => onQuiz(deck.id)}
-                      className="bg-amber-500 text-white font-semibold rounded-xl py-2.5 flex items-center justify-center gap-1.5 text-sm active:scale-95 transition-transform"
+                      className="bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl py-2.5 flex items-center justify-center gap-1.5 text-sm active:scale-95 transition-transform"
                     >
                       <Brain className="w-4 h-4" /> Тест
                     </button>
@@ -222,7 +221,7 @@ export default function FlashcardsScreen({
                   <h4 className="text-sm font-semibold text-amber-900">Пятиминутная разминка</h4>
                 </div>
                 <p className="text-xs text-gray-600">
-                  Запустите режим Quiz на 5-7 минут в начале урока. 5-10 вопросов по прошлой теме мгновенно настроят мозг класса на рабочий лад.
+                  Запустите режим Тест на 5-7 минут в начале урока. 5-10 вопросов по прошлой теме мгновенно настроят мозг класса на рабочий лад.
                 </p>
               </div>
               <div className="bg-white rounded-xl p-3">
@@ -243,18 +242,6 @@ export default function FlashcardsScreen({
                   Классика, которая работает безотказно. Ученик видит слово, пытается вспомнить перевод и получает мгновенную обратную связь.
                 </p>
               </div>
-            </div>
-          </div>
-
-          {/* Как это работает */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 border-2 border-blue-200">
-            <h3 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
-              <Brain className="w-5 h-5" />
-              Как это работает
-            </h3>
-            <div className="space-y-2 text-xs text-gray-700">
-              <p><strong>Режим изучения (Study)</strong> — листайте карточки в удобном темпе, пытайтесь вспомнить ответ и проверяйте себя переворотом карточки.</p>
-              <p><strong>Режим тестирования (Quiz)</strong> — система сама задаёт вопросы, вы выбираете ответ из вариантов. Идеально для быстрой проверки знаний!</p>
             </div>
           </div>
 
