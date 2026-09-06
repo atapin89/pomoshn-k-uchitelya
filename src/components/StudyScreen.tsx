@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, ArrowLeft, RotateCcw } from 'lucide-react';
+import { BookOpen, ArrowLeft } from 'lucide-react';
 import BackButton from './BackButton';
 
 interface Flashcard {
