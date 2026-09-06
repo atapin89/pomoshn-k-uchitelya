@@ -107,7 +107,7 @@ export default function QuizScreen({ deckId, onBack }: { deckId: string; onBack:
       message = 'Хороший результат! 👍';
       color = 'text-blue-600';
     } else if (percentage >= 50) {
-      message = 'Неплохо, но можно лучше 💪';
+      message = 'Неплохо, но можно лучше ';
       color = 'text-amber-600';
     } else {
       message = 'Стоит повторить материал 📚';
