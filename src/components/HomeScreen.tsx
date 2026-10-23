@@ -3,6 +3,7 @@ import { Clock, Dices, Volume2, Layers, HelpCircle, Grid3x3, BookOpen, Calculato
 import YandexAdBlock from './YandexAdBlock';
 import { HelpModal } from './HelpModal';
 import { helpTexts } from '@/data/helpTexts';
+import PromoModal from './PromoModal';
 
 interface HomeScreenProps {
   onNavigate: (route: 'timer' | 'generator' | 'noise' | 'flashcards' | 'wordsearch' | 'manual' | 'calculators') => void;
@@ -10,6 +11,14 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ onNavigate }: HomeScreenProps) {
   const [activeHelpModal, setActiveHelpModal] = useState<string | null>(null);
+  const [showPromo, setShowPromo] = useState(() => {
+    return !localStorage.getItem('promo_shown');
+  });
+
+  const handleClosePromo = () => {
+    setShowPromo(false);
+    localStorage.setItem('promo_shown', 'true');
+  };
 
   const sections = [
     { id: 'timer', title: 'Таймер урока', description: 'Шаблоны и этапы', icon: Clock },
@@ -104,6 +113,8 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
         title={activeHelpModal ? helpTexts[activeHelpModal as keyof typeof helpTexts]?.title || 'Помощь' : ''}
         content={activeHelpModal ? helpTexts[activeHelpModal as keyof typeof helpTexts]?.content || 'Описание скоро появится' : ''}
       />
+
+      {showPromo && <PromoModal onClose={handleClosePromo} />}
     </div>
   );
 }
